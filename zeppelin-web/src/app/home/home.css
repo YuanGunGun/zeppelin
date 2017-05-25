@@ -455,40 +455,6 @@ This part should be removed when new version of bootstrap handles this issue.
   z-index: 10003 !important;
 }
 
-#noteImportModal .modal-body {
-  min-height: 420px;
-  overflow: hidden;
-}
-
-#noteImportModal .modal-footer {
-  min-height: 65px;
-}
-
-#noteImportModal .display-inline a {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  color: #999;
-  cursor: pointer;
-  display: block;
-  float: left;
-  font-size: 98px;
-  height: 240px;
-  margin: 0 10px 16px;
-  padding-top: 60px;
-  text-align: center;
-  text-decoration: none;
-  width: 264px;
-}
-
-#noteImportModal .display-inline a:hover {
-  background: #eee;
-}
-
-#noteImportModal .display-inline a p {
-  font-size: 14px;
-}
-
 /* ------------------------------------------- */
 /* Slide Top
 /* ------------------------------------------- */
@@ -823,29 +789,4 @@ This part should be removed when new version of bootstrap handles this issue.
 
 .bootstrap-dialog.type-primary .modal-header {
   background: #3071a9;
-}
-
-/* About Zeppelin */
-.about {
-  height: 200px;
-  padding: 25px;
-}
-
-.about .logo {
-  padding-top: 30px;
-}
-
-.about .logo img {
-  width: 95%;
-}
-
-.about .content {
-  text-align: center;
-}
-
-.about .content h3 {
-  font-family: 'Patua One';
-  color: #3071A9;
-  font-size: 30px;
-  margin: 0 auto;
 }
