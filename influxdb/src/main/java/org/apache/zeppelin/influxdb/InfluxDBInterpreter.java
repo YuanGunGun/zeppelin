@@ -211,14 +211,13 @@ public class InfluxDBInterpreter extends Interpreter {
       // 如果是use db,自动切换db,不执行实际命令。
       String[] commandSplit = sqlToExecute.trim().toLowerCase().split("\\s+");
       if (commandSplit[0].equals("use")) {
-        if (commandSplit.length < 2)
-          return new InterpreterResult(Code.ERROR, "Command `use` wrong, eg : use dbName.");
-        toConnectDB = commandSplit[1];
-        if (toConnectDB.endsWith(";")) {
-          toConnectDB = toConnectDB.substring(0, toConnectDB.length() - 1);
-          interpreterResult.add(InterpreterResult.Type.TEXT,
-                  "Query executed successfully.");
+        if (commandSplit.length < 2){
+          interpreterResult.add("Command `use` wrong, eg : use dbName.");
+          return new InterpreterResult(Code.ERROR, interpreterResult.message());
         }
+        toConnectDB = commandSplit[1];
+        interpreterResult.add(InterpreterResult.Type.TEXT,
+                "Query executed successfully.");
         continue;
       }
       interpreterResult.add(executeQuery(idb, sqlToExecute, toConnectDB));
