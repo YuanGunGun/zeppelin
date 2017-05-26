@@ -149,20 +149,10 @@ public class InfluxDBInterpreter extends Interpreter {
     }
   }
 
-  @Override
-  public InterpreterResult interpret(String cmd, InterpreterContext interpreterContext) {
-    LOGGER.info("Run influxDB command '{}'", cmd);
-
+  protected String executeQuery(InfluxDB idb, String cmd, String toConnectDB) {
     StringBuilder msg = new StringBuilder();
     try {
-      InfluxDB idb = InfluxDBFactory.connect(property.getProperty("default.url"),
-          property.getProperty("default.user"), property.getProperty("default.password"));
-      ArrayList<String> multipleSqlArray = splitSqlQueries(cmd);
-      for (int i = 0; i < multipleSqlArray.size(); i++) {
-
-      }
-      QueryResult query = idb.query(new Query(cmd, property.getProperty("default.database")));
-
+      QueryResult query = idb.query(new Query(cmd, toConnectDB));
       if (query.hasError()) {
         LOGGER.error("InfluxDB Query Error ", query.getError());
         msg.append(query.getError());
@@ -200,7 +190,40 @@ public class InfluxDBInterpreter extends Interpreter {
       msg = new StringBuilder();
       msg.append(e);
     }
-    return new InterpreterResult(Code.SUCCESS, msg.toString());
+    return msg.toString();
+  }
+
+
+  @Override
+  public InterpreterResult interpret(String cmd, InterpreterContext interpreterContext) {
+    LOGGER.info("Run influxDB command '{}'", cmd);
+
+    StringBuilder msg = new StringBuilder();
+    InfluxDB idb = InfluxDBFactory.connect(property.getProperty("default.url"),
+            property.getProperty("default.user"), property.getProperty("default.password"));
+    InterpreterResult interpreterResult = new InterpreterResult(InterpreterResult.Code.SUCCESS);
+    ArrayList<String> multipleSqlArray = splitSqlQueries(cmd);
+    String toConnectDB = property.getProperty("default.database");
+    for (int i = 0; i < multipleSqlArray.size(); i++) {
+      String sqlToExecute = multipleSqlArray.get(i);
+      interpreterResult.add(InterpreterResult.Type.TEXT,
+              String.format("DEBUG -> %s.", sqlToExecute));
+      // 如果是use db,自动切换db,不执行实际命令。
+      String[] commandSplit = sqlToExecute.trim().toLowerCase().split("\\s+");
+      if (commandSplit[0].equals("use")) {
+        if (commandSplit.length < 2)
+          return new InterpreterResult(Code.ERROR, "Command `use` wrong, eg : use dbName.");
+        toConnectDB = commandSplit[1];
+        if (toConnectDB.endsWith(";")) {
+          toConnectDB = toConnectDB.substring(0, toConnectDB.length() - 1);
+          interpreterResult.add(InterpreterResult.Type.TEXT,
+                  "Query executed successfully.");
+        }
+        continue;
+      }
+      interpreterResult.add(executeQuery(idb, sqlToExecute, toConnectDB));
+    }
+    return interpreterResult;
   }
 
   @Override
