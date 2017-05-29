@@ -160,7 +160,13 @@ public class InfluxDBInterpreter extends Interpreter {
         msg.append(TABLE_MAGIC_TAG);
         List<QueryResult.Result> results = query.getResults();
         LOGGER.debug("InfluxDB Query result '{}'", results.toString());
-        QueryResult.Series data = results.get(0).getSeries().get(0);
+        QueryResult.Result result = results.get(0);
+        if (result == null || result.getSeries() == null) {
+          LOGGER.debug("InfluxDB Query result 0 '{}'", result);
+          LOGGER.debug("InfluxDB Query result 0 getSeries '{}'", result.getSeries());
+          return "No data from query.";
+        }
+        QueryResult.Series data = result.getSeries().get(0);
         Iterator<String> columns = data.getColumns().iterator();
         Iterator<List<Object>> rows = data.getValues().iterator();
         while (columns.hasNext()) {
@@ -206,8 +212,8 @@ public class InfluxDBInterpreter extends Interpreter {
     String toConnectDB = property.getProperty("default.database");
     for (int i = 0; i < multipleSqlArray.size(); i++) {
       String sqlToExecute = multipleSqlArray.get(i);
-      interpreterResult.add(InterpreterResult.Type.TEXT,
-              String.format("DEBUG -> %s.", sqlToExecute));
+//      interpreterResult.add(InterpreterResult.Type.TEXT,
+//              String.format("DEBUG -> %s.", sqlToExecute));
       // 如果是use db,自动切换db,不执行实际命令。
       String[] commandSplit = sqlToExecute.trim().toLowerCase().split("\\s+");
       if (commandSplit[0].equals("use")) {
