@@ -43,120 +43,120 @@ import com.google.common.collect.Sets;
  */
 public class SecurityUtils {
 
-    private static final String ANONYMOUS = "anonymous";
-    private static final HashSet<String> EMPTY_HASHSET = Sets.newHashSet();
-    private static boolean isEnabled = false;
-    private static final Logger log = LoggerFactory.getLogger(SecurityUtils.class);
+  private static final String ANONYMOUS = "anonymous";
+  private static final HashSet<String> EMPTY_HASHSET = Sets.newHashSet();
+  private static boolean isEnabled = false;
+  private static final Logger log = LoggerFactory.getLogger(SecurityUtils.class);
 
-    public static void initSecurityManager(String shiroPath) {
-        IniSecurityManagerFactory factory = new IniSecurityManagerFactory("file:" + shiroPath);
-        SecurityManager securityManager = factory.getInstance();
-        org.apache.shiro.SecurityUtils.setSecurityManager(securityManager);
-        isEnabled = true;
+  public static void initSecurityManager(String shiroPath) {
+    IniSecurityManagerFactory factory = new IniSecurityManagerFactory("file:" + shiroPath);
+    SecurityManager securityManager = factory.getInstance();
+    org.apache.shiro.SecurityUtils.setSecurityManager(securityManager);
+    isEnabled = true;
+  }
+
+  public static Boolean isValidOrigin(String sourceHost, ZeppelinConfiguration conf)
+      throws UnknownHostException, URISyntaxException {
+
+    String sourceUriHost = "";
+
+    if (sourceHost != null && !sourceHost.isEmpty()) {
+      sourceUriHost = new URI(sourceHost).getHost();
+      sourceUriHost = (sourceUriHost == null) ? "" : sourceUriHost.toLowerCase();
     }
 
-    public static Boolean isValidOrigin(String sourceHost, ZeppelinConfiguration conf)
-            throws UnknownHostException, URISyntaxException {
+    sourceUriHost = sourceUriHost.toLowerCase();
+    String currentHost = InetAddress.getLocalHost().getHostName().toLowerCase();
 
-        String sourceUriHost = "";
+    return conf.getAllowedOrigins().contains("*") ||
+        currentHost.equals(sourceUriHost) ||
+        "localhost".equals(sourceUriHost) ||
+        conf.getAllowedOrigins().contains(sourceHost);
+  }
 
-        if (sourceHost != null && !sourceHost.isEmpty()) {
-            sourceUriHost = new URI(sourceHost).getHost();
-            sourceUriHost = (sourceUriHost == null) ? "" : sourceUriHost.toLowerCase();
-        }
-
-        sourceUriHost = sourceUriHost.toLowerCase();
-        String currentHost = InetAddress.getLocalHost().getHostName().toLowerCase();
-
-        return conf.getAllowedOrigins().contains("*") ||
-                currentHost.equals(sourceUriHost) ||
-                "localhost".equals(sourceUriHost) ||
-                conf.getAllowedOrigins().contains(sourceHost);
+  /**
+   * Return the authenticated user if any otherwise returns "anonymous"
+   *
+   * @return shiro principal
+   */
+  public static String getPrincipal() {
+    if (!isEnabled) {
+      return ANONYMOUS;
     }
+    Subject subject = org.apache.shiro.SecurityUtils.getSubject();
 
-    /**
-     * Return the authenticated user if any otherwise returns "anonymous"
-     *
-     * @return shiro principal
-     */
-    public static String getPrincipal() {
-        if (!isEnabled) {
-            return ANONYMOUS;
-        }
-        Subject subject = org.apache.shiro.SecurityUtils.getSubject();
-
-        String principal;
-        if (subject.isAuthenticated()) {
-            principal = subject.getPrincipal().toString();
-        } else {
-            principal = ANONYMOUS;
-        }
-        return principal;
+    String principal;
+    if (subject.isAuthenticated()) {
+      principal = subject.getPrincipal().toString();
+    } else {
+      principal = ANONYMOUS;
     }
+    return principal;
+  }
 
-    public static Collection getRealmsList() {
-        if (!isEnabled) {
-            return Collections.emptyList();
-        }
-        DefaultWebSecurityManager defaultWebSecurityManager;
-        String key = ThreadContext.SECURITY_MANAGER_KEY;
-        defaultWebSecurityManager = (DefaultWebSecurityManager) ThreadContext.get(key);
-        Collection<Realm> realms = defaultWebSecurityManager.getRealms();
-        return realms;
+  public static Collection getRealmsList() {
+    if (!isEnabled) {
+      return Collections.emptyList();
     }
+    DefaultWebSecurityManager defaultWebSecurityManager;
+    String key = ThreadContext.SECURITY_MANAGER_KEY;
+    defaultWebSecurityManager = (DefaultWebSecurityManager) ThreadContext.get(key);
+    Collection<Realm> realms = defaultWebSecurityManager.getRealms();
+    return realms;
+  }
 
-    /**
-     * Return the roles associated with the authenticated user if any otherwise returns empty set
-     * TODO(prasadwagle) Find correct way to get user roles (see SHIRO-492)
-     *
-     * @return shiro roles
-     */
-    public static HashSet<String> getRoles() {
-        if (!isEnabled) {
-            return EMPTY_HASHSET;
-        }
-        Subject subject = org.apache.shiro.SecurityUtils.getSubject();
-        HashSet<String> roles = new HashSet<>();
-        Map allRoles = null;
-
-        if (subject.isAuthenticated()) {
-            Collection realmsList = SecurityUtils.getRealmsList();
-            for (Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext(); ) {
-                Realm realm = iterator.next();
-                String name = realm.getClass().getName();
-                if (name.equals("org.apache.shiro.realm.text.IniRealm")) {
-                    allRoles = ((IniRealm) realm).getIni().get("roles");
-                    break;
-                } else if (name.equals("org.apache.zeppelin.realm.LdapRealm")) {
-                    allRoles = ((LdapRealm) realm).getListRoles();
-                    break;
-                } else if (name.equals("org.apache.zeppelin.realm.ZeppelinJdbcRealm")) {
-                    String username = subject.getPrincipal().toString();
-                    Set<String> userRoles = ((ZeppelinJdbcRealm) realm).getUserRoles(username);
-                    roles = new HashSet<>(userRoles);
-                    break;
-                }
-            }
-            if (allRoles != null) {
-                Iterator it = allRoles.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry pair = (Map.Entry) it.next();
-                    if (subject.hasRole((String) pair.getKey())) {
-                        roles.add((String) pair.getKey());
-                    }
-                }
-            }
-        }
-        return roles;
+  /**
+   * Return the roles associated with the authenticated user if any otherwise returns empty set
+   * TODO(prasadwagle) Find correct way to get user roles (see SHIRO-492)
+   *
+   * @return shiro roles
+   */
+  public static HashSet<String> getRoles() {
+    if (!isEnabled) {
+      return EMPTY_HASHSET;
     }
+    Subject subject = org.apache.shiro.SecurityUtils.getSubject();
+    HashSet<String> roles = new HashSet<>();
+    Map allRoles = null;
 
-    /**
-     * Checked if shiro enabled or not
-     */
-    public static boolean isAuthenticated() {
-        if (!isEnabled) {
-            return false;
+    if (subject.isAuthenticated()) {
+      Collection realmsList = SecurityUtils.getRealmsList();
+      for (Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext(); ) {
+        Realm realm = iterator.next();
+        String name = realm.getClass().getName();
+        if (name.equals("org.apache.shiro.realm.text.IniRealm")) {
+          allRoles = ((IniRealm) realm).getIni().get("roles");
+          break;
+        } else if (name.equals("org.apache.zeppelin.realm.LdapRealm")) {
+          allRoles = ((LdapRealm) realm).getListRoles();
+          break;
+        } else if (name.equals("org.apache.zeppelin.realm.ZeppelinJdbcRealm")) {
+          String username = subject.getPrincipal().toString();
+          Set<String> userRoles = ((ZeppelinJdbcRealm) realm).getUserRoles(username);
+          roles = new HashSet<>(userRoles);
+          break;
         }
-        return org.apache.shiro.SecurityUtils.getSubject().isAuthenticated();
+      }
+      if (allRoles != null) {
+        Iterator it = allRoles.entrySet().iterator();
+        while (it.hasNext()) {
+          Map.Entry pair = (Map.Entry) it.next();
+          if (subject.hasRole((String) pair.getKey())) {
+            roles.add((String) pair.getKey());
+          }
+        }
+      }
     }
+    return roles;
+  }
+
+  /**
+   * Checked if shiro enabled or not
+   */
+  public static boolean isAuthenticated() {
+    if (!isEnabled) {
+      return false;
+    }
+    return org.apache.shiro.SecurityUtils.getSubject().isAuthenticated();
+  }
 }

@@ -14,27 +14,27 @@ import java.util.Set;
  * Created by norbertchen on 2017/6/16.
  */
 public class ZeppelinJdbcRealm extends JdbcRealm {
-    private static final Logger log = LoggerFactory.getLogger(ZeppelinJdbcRealm.class);
+  private static final Logger log = LoggerFactory.getLogger(ZeppelinJdbcRealm.class);
 
-    public ZeppelinJdbcRealm() {
-        super();
-    }
+  public ZeppelinJdbcRealm() {
+    super();
+  }
 
-    public Set<String> getUserRoles(String username) {
-        Connection conn = null;
-        try {
-            conn = dataSource.getConnection();
-            Set<String> roleNames = getRoleNamesForUser(conn, username);
-            return roleNames;
-        } catch (SQLException e) {
-            String message = "There was a SQL error while authorizing user [" + username + "]";
-            if (log.isErrorEnabled()) {
-                log.error(message, e);
-            }
-            throw new AuthorizationException(message, e);
-        } finally {
-            JdbcUtils.closeConnection(conn);
-        }
+  public Set<String> getUserRoles(String username) {
+    Connection conn = null;
+    try {
+      conn = dataSource.getConnection();
+      Set<String> roleNames = getRoleNamesForUser(conn, username);
+      return roleNames;
+    } catch (SQLException e) {
+      String message = "There was a SQL error while authorizing user [" + username + "]";
+      if (log.isErrorEnabled()) {
+        log.error(message, e);
+      }
+      throw new AuthorizationException(message, e);
+    } finally {
+      JdbcUtils.closeConnection(conn);
     }
+  }
 
 }
