@@ -133,11 +133,13 @@ public class SecurityUtils {
         } else if (name.equals("org.apache.zeppelin.realm.ZeppelinJdbcRealm")) {
           final String username = subject.getPrincipal().toString();
           final Set<String> userRoles = ((ZeppelinJdbcRealm) realm).getUserRoles(username);
-          allRoles = new HashMap<String, String>() {{
-            for (String role : userRoles) {
-              put(role, username);
+          allRoles = new HashMap<String, String>() {
+            {
+              for (String role : userRoles) {
+                put(role, username);
+              }
             }
-          }};
+          };
           break;
         }
       }
