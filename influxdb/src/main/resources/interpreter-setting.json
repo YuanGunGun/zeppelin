@@ -1,0 +1,33 @@
+[
+  {
+    "group": "influxdb",
+    "name": "influxdb",
+    "className": "org.apache.zeppelin.influxdb.InfluxDBInterpreter",
+    "properties": {
+      "default.user": {
+        "envName": null,
+        "propertyName": "user",
+        "defaultValue": "root",
+        "description": "InfluxDB user name"
+      },
+      "default.password": {
+        "envName": null,
+        "propertyName": "password",
+        "defaultValue": "root",
+        "description": "InfluxDB password"
+      },
+      "default.database": {
+        "envName": null,
+        "propertyName": "database",
+        "defaultValue": "_internal",
+        "description": "InfluxDB database"
+      },
+      "default.url": {
+        "envName": null,
+        "propertyName": "url",
+        "defaultValue": "http://influx:8086",
+        "description": "InfluxDB url"
+      }
+    }
+  }
+]
