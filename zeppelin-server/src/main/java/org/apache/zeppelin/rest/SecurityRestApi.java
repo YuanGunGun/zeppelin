@@ -27,6 +27,7 @@ import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.realm.ActiveDirectoryGroupRealm;
 import org.apache.zeppelin.realm.LdapRealm;
+import org.apache.zeppelin.realm.ZeppelinJdbcRealm;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.ticket.TicketContainer;
 import org.apache.zeppelin.utils.SecurityUtils;
@@ -123,6 +124,8 @@ public class SecurityRestApi {
                 searchText));
           } else if (name.equals("org.apache.shiro.realm.jdbc.JdbcRealm")) {
             usersList.addAll(getUserListObj.getUserList((JdbcRealm) realm));
+          } else if (name.equals("org.apache.shiro.realm.jdbc.ZeppelinJdbcRealm")) {
+            usersList.addAll(getUserListObj.getUserList((ZeppelinJdbcRealm) realm));
           }
         }
       }
