@@ -20,7 +20,11 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.mgt.SecurityManager;
@@ -30,8 +34,8 @@ import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.realm.ActiveDirectoryGroupRealm;
 import org.apache.zeppelin.realm.LdapRealm;
-import org.apache.zeppelin.realm.ZeppelinJdbcRealm;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +51,7 @@ public class SecurityUtils {
   private static final HashSet<String> EMPTY_HASHSET = Sets.newHashSet();
   private static boolean isEnabled = false;
   private static final Logger log = LoggerFactory.getLogger(SecurityUtils.class);
-
+  
   public static void initSecurityManager(String shiroPath) {
     IniSecurityManagerFactory factory = new IniSecurityManagerFactory("file:" + shiroPath);
     SecurityManager securityManager = factory.getInstance();
@@ -130,16 +134,8 @@ public class SecurityUtils {
         } else if (name.equals("org.apache.zeppelin.realm.LdapRealm")) {
           allRoles = ((LdapRealm) realm).getListRoles();
           break;
-        } else if (name.equals("org.apache.zeppelin.realm.ZeppelinJdbcRealm")) {
-          final String username = subject.getPrincipal().toString();
-          final Set<String> userRoles = ((ZeppelinJdbcRealm) realm).getUserRoles(username);
-          allRoles = new HashMap<String, String>() {
-            {
-              for (String role : userRoles) {
-                put(role, username);
-              }
-            }
-          };
+        } else if (name.equals("org.apache.zeppelin.realm.ActiveDirectoryGroupRealm")) {
+          allRoles = ((ActiveDirectoryGroupRealm) realm).getListRoles();
           break;
         }
       }

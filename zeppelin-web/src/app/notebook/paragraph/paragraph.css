@@ -113,7 +113,6 @@
   display: none;
   float: right;
   color: #999;
-  margin-top: -9px;
   margin-right: 0;
   position: absolute;
   clear: both;
@@ -175,8 +174,9 @@
 }
 
 .paragraph .control {
-  background: rgba(255,255,255,0.85);
+  position: absolute;
   float: right;
+  background: rgba(255,255,255,0.85);
   color: #999;
   margin-top: 1px;
   margin-right: 5px;
@@ -370,8 +370,20 @@ table.table-shortcut {
   direction: ltr;
 }
 
+/** set highlight line color */
+#main .ace-chrome .ace_marker-layer .ace_active-line {
+  background: rgba(114, 127, 222, 0.08);
+}
+
+/** hide not focused cursors */
 .ace_hidden-cursors {
   opacity: 0;
+}
+
+/** set cursor color */
+#main .emacs-mode .ace_cursor {
+  background: #C0C0C0!important;
+  border: none !important;
 }
 
 .ace_text-input, .ace_gutter, .ace_layer,
@@ -382,11 +394,6 @@ table.table-shortcut {
 
 .ace_text-input.ace_composition {
  opacity: 0 !important;
-}
-
-#main .emacs-mode .ace_cursor {
-  background: #C0C0C0!important;
-  border: none !important;
 }
 
 /*
@@ -556,4 +563,8 @@ table.table-striped {
 
 .markdown-body h4 {
   font-size: 16px;
+}
+
+.network-labels {
+  margin: 0.2em;
 }
