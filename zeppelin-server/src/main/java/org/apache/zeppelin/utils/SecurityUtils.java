@@ -20,11 +20,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.mgt.SecurityManager;
@@ -36,6 +32,7 @@ import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.realm.ActiveDirectoryGroupRealm;
 import org.apache.zeppelin.realm.LdapRealm;
+import org.apache.zeppelin.realm.ZeppelinJdbcRealm;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,6 +133,17 @@ public class SecurityUtils {
           break;
         } else if (name.equals("org.apache.zeppelin.realm.ActiveDirectoryGroupRealm")) {
           allRoles = ((ActiveDirectoryGroupRealm) realm).getListRoles();
+          break;
+        } else if (name.equals("org.apache.zeppelin.realm.ZeppelinJdbcRealm")) {
+          final String username = subject.getPrincipal().toString();
+          final Set<String> userRoles = ((ZeppelinJdbcRealm) realm).getUserRoles(username);
+          allRoles = new HashMap<String, String>() {
+            {
+              for (String role : userRoles) {
+                put(role, username);
+              }
+            }
+          };
           break;
         }
       }
