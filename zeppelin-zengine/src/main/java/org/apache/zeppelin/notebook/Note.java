@@ -610,6 +610,7 @@ public class Note implements Serializable, ParagraphJobListener {
     }
 
     String requiredReplName = p.getRequiredReplName();
+    logger.info("~~ requiredReplName : {}",requiredReplName);
     /**
      * ctongfu@gmail.com
      * 控制可用的repl范围
