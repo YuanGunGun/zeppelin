@@ -11,7 +11,7 @@ import java.sql.SQLException;
 import java.util.Set;
 
 /**
- * Created by norbertchen on 2017/6/16.
+ * Created by ctontfu@gmail.com on 2017/6/16.
  */
 public class ZeppelinJdbcRealm extends JdbcRealm {
   private static final Logger log = LoggerFactory.getLogger(ZeppelinJdbcRealm.class);

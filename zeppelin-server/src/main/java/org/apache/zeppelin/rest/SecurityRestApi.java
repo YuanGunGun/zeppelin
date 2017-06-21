@@ -125,6 +125,7 @@ public class SecurityRestApi {
           } else if (name.equals("org.apache.shiro.realm.jdbc.JdbcRealm")) {
             usersList.addAll(getUserListObj.getUserList((JdbcRealm) realm));
           } else if (name.equals("org.apache.shiro.realm.jdbc.ZeppelinJdbcRealm")) {
+            //ctontfu@gmail.com
             usersList.addAll(getUserListObj.getUserList((ZeppelinJdbcRealm) realm));
           }
         }

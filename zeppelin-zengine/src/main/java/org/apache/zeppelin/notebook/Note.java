@@ -474,7 +474,20 @@ public class Note implements Serializable, ParagraphJobListener {
     }
   }
 
+  /**
+   * ctontfu@gmail.com
+   *
+   * 通过修改是否是最后一个Paragraph来控制Paragraph数量
+   * 默认20个。todo 改成可配
+   * @param paragraphId
+   * @return
+   */
+
   public boolean isLastParagraph(String paragraphId) {
+    //ctontfu@gmail.com
+    if (paragraphs.size() >= 20) {
+      return false;
+    }
     if (!paragraphs.isEmpty()) {
       synchronized (paragraphs) {
         if (paragraphId.equals(paragraphs.get(paragraphs.size() - 1).getId())) {
@@ -589,7 +602,7 @@ public class Note implements Serializable, ParagraphJobListener {
   public void run(String paragraphId) {
     Paragraph p = getParagraph(paragraphId);
     p.setListener(jobListenerFactory.getParagraphJobListener(this));
-    
+
     if (p.isBlankParagraph()) {
       logger.info("skip to run blank paragraph. {}", p.getId());
       p.setStatus(Job.Status.FINISHED);

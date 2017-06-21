@@ -83,6 +83,7 @@ public class LoginRestApi {
     if (!currentUser.isAuthenticated()) {
       try {
         /**
+         *ctontfu@gmail.com
          *替换userName和password
          *使用jdbcRealm中的合法password替换参数传递过来的password
          */
