@@ -610,9 +610,6 @@ public class Note implements Serializable, ParagraphJobListener {
     }
 
     String requiredReplName = p.getRequiredReplName();
-    /**
-     * todo 增加自动生成repl逻辑,如果用户写了repl检查是否允许,如果没写,生成默认repl
-     */
     Interpreter intp = factory.getInterpreter(p.getUser(), getId(), requiredReplName);
 
     if (intp == null) {
