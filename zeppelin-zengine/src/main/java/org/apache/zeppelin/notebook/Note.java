@@ -610,9 +610,25 @@ public class Note implements Serializable, ParagraphJobListener {
     }
 
     String requiredReplName = p.getRequiredReplName();
+    /**
+     * ctongfu@gmail.com
+     * 控制可用的repl范围
+     * todo 可配置
+     */
+    List<String> allowedRepl = new ArrayList<String>() {
+      {
+        add("tspider_gem");
+        add("tspider_gemmobile");
+        add("tspider_ja");
+        add("tspider_ser");
+        add("spark");
+        add("spark.sql");
+        add("spark.pyspark");
+      }
+    };
     Interpreter intp = factory.getInterpreter(p.getUser(), getId(), requiredReplName);
 
-    if (intp == null) {
+    if (intp == null || !allowedRepl.contains(requiredReplName)) {
       String intpExceptionMsg =
           p.getJobName() + "'s Interpreter " + requiredReplName + " not found";
       InterpreterException intpException = new InterpreterException(intpExceptionMsg);
