@@ -17,12 +17,17 @@
 
 package org.apache.zeppelin.spark;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.yarn.webapp.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+import org.apache.zeppelin.utils.HTTPUtils;
+
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -36,6 +41,7 @@ class BkdataUtils {
   public static Logger logger = LoggerFactory.getLogger(BkdataUtils.class);
   private static Pattern r = Pattern.compile("sqlc\\.read\\.(parquet|json)\\(.*$");
   private static Pattern rn = Pattern.compile("\\(.*\\)");
+  private static Gson gson = new Gson();
 
   /*
   inspired from https://github.com/postgres/pgadmin3/blob/794527d97e2e3b01399954f3b79c8e2585b908dd/
@@ -120,6 +126,29 @@ class BkdataUtils {
     return queries;
   }
 
+  public static String fetchHdfsPrefix(String rt_id) {
+    String rtn = "/kafka/data/";
+    try {
+      GetMethod getRtType = HTTPUtils.httpGet("http://api.leaf.ied.com",
+          String.format("/offline/rt/get_rt_type?rt_id=%s", rt_id));
+      Map<String, Object> resp = gson.fromJson(getRtType.getResponseBodyAsString(),
+          new TypeToken<Map<String, Object>>() {
+          }.getType());
+      boolean result = (Boolean) resp.get("result");
+      if (!result) {
+        String msg = (String) resp.get("message");
+        logger.error("Call offline api Failed - {}", msg);
+        throw new NotFoundException("make legal user failed");
+      }
+      Map<String, String> data = (Map<String, String>) resp.get("data");
+      if ("batch".equals(data.get("type")))
+        rtn = "/api/flow/";
+    } catch (IOException ie) {
+      logger.error("~~ error in get rt type :", ie);
+    }
+    return rtn;
+  }
+
   public static String sparkReadArgs2HdfsPath(String rt_id, String start_time, String end_time)
       throws ParseException {
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHH") {
@@ -133,7 +162,7 @@ class BkdataUtils {
       }
     };
     String[] splits = rt_id.split("_");
-    String prefix = "/kafka/data/" + splits[0] + "/" + StringUtils.join(splits, "_", 1,
+    String prefix = fetchHdfsPrefix(rt_id) + splits[0] + "/" + StringUtils.join(splits, "_", 1,
         splits.length);
     long startTimeMills = dateFormat.parse(start_time).getTime();
     long endTimeMills = dateFormat.parse(end_time).getTime();
@@ -175,6 +204,6 @@ class BkdataUtils {
       if (isError)
         throw new Exception("spark grammar wrong");
     }
-    return  line;
+    return line;
   }
 }
