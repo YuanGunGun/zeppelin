@@ -138,7 +138,7 @@ class BkdataUtils {
       if (!result) {
         String msg = (String) resp.get("message");
         logger.error("Call offline api Failed - {}", msg);
-        throw new NotFoundException("make legal user failed");
+        throw new IOException("Result table not found");
       }
       Map<String, String> data = (Map<String, String>) resp.get("data");
       if ("batch".equals(data.get("type")))
