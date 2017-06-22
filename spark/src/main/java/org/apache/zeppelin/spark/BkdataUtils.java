@@ -119,7 +119,7 @@ class BkdataUtils {
     return queries;
   }
 
-  public static String sparkReadArgs2HdfsPath(String rt_id,String start_time,String end_time)
+  public static String sparkReadArgs2HdfsPath(String rt_id, String start_time, String end_time)
       throws ParseException {
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHH") {
       {
@@ -137,9 +137,9 @@ class BkdataUtils {
     long startTimeMills = dateFormat.parse(start_time).getTime();
     long endTimeMills = dateFormat.parse(end_time).getTime();
     List<String> paths = new LinkedList<>();
-    for(long timeMills = startTimeMills;timeMills <= endTimeMills; timeMills += 3600000){
+    for (long timeMills = startTimeMills; timeMills <= endTimeMills; timeMills += 3600000) {
       paths.add(prefix + pathDateFormat.format(timeMills));
     }
-    return StringUtils.join(paths,",");
+    return StringUtils.join(paths, ",");
   }
 }
