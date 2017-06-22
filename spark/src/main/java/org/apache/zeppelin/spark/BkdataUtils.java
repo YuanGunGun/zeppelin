@@ -25,16 +25,17 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Utility and helper functions for the BKDATA
  */
 class BkdataUtils {
   public static Logger logger = LoggerFactory.getLogger(BkdataUtils.class);
+  private static Pattern r = Pattern.compile("sqlc\\.read\\.(parquet|json)\\(.*$");
+  private static Pattern rn = Pattern.compile("\\(.*\\)");
 
   /*
   inspired from https://github.com/postgres/pgadmin3/blob/794527d97e2e3b01399954f3b79c8e2585b908dd/
@@ -141,5 +142,39 @@ class BkdataUtils {
       paths.add(prefix + pathDateFormat.format(timeMills));
     }
     return StringUtils.join(paths, ",");
+  }
+
+  public static String coreWordReplace(String line) throws Exception {
+    Matcher m = r.matcher(line);
+    if (m.find()) {
+      boolean isError = true;
+      Matcher mn = rn.matcher(m.group());
+      if (mn.find()) {
+        String s = mn.group();
+        String toSpilit = s.replace("\"", "").replace("(", "").replace(")", "");
+        String[] readArgs = toSpilit.split(",");
+        logger.info("~~ sparksqlInterpreter {}", Arrays.toString(readArgs));
+        //default 3 args : rt_id, start_time, end_time
+        if (readArgs.length == 3) {
+          String rt_id = readArgs[0];
+          String start_time = readArgs[1];
+          String end_time = readArgs[2];
+          try {
+            String newReadArg = sparkReadArgs2HdfsPath(rt_id, start_time, end_time);
+            String left = line.substring(0, line.indexOf("("));
+            String right = line.substring(line.indexOf(")"));
+            String newCmd = left + "(\"" + newReadArg + "\"" + right;
+            logger.info("~~ new cmd {}", newCmd);
+            line = newCmd;
+            isError = false;
+          } catch (ParseException pe) {
+            logger.error("~~ prase read args error - {}", pe.getMessage());
+          }
+        }
+      }
+      if (isError)
+        throw new Exception("spark grammar wrong");
+    }
+    return  line;
   }
 }

@@ -983,41 +983,8 @@ public class SparkInterpreter extends Interpreter {
     return null;
   }
 
-  private Results.Result interpret(String line) throws Exception {
-    //匹配读hdfs语句
-    String pattern = "sqlc\\.read\\.(parquet|json)\\(.*$";
-    Pattern r = Pattern.compile(pattern);
-    Matcher m = r.matcher(line);
-    if (m.find()) {
-      boolean isError = true;
-      Pattern rn = Pattern.compile("\\(.*\\)");
-      Matcher mn = rn.matcher(m.group());
-      if (mn.find()) {
-        String s = mn.group();
-        String toSpilit = s.replace("\"", "").replace("(", "").replace(")", "");
-        String[] readArgs = toSpilit.split(",");
-        logger.info("~~ sparksqlInterpreter {}", Arrays.toString(readArgs));
-        //default 3 args : rt_id, start_time, end_time
-        if (readArgs.length == 3) {
-          String rt_id = readArgs[0];
-          String start_time = readArgs[1];
-          String end_time = readArgs[2];
-          try {
-            String newReadArg = BkdataUtils.sparkReadArgs2HdfsPath(rt_id, start_time, end_time);
-            String left = line.substring(0, line.indexOf("("));
-            String right = line.substring(line.indexOf(")"));
-            String newCmd = left + "(\"" + newReadArg + "\"" + right;
-            logger.info("~~ new cmd {}", newCmd);
-            line = newCmd;
-            isError = false;
-          } catch (ParseException pe) {
-            logger.error("~~ prase read args error - {}", pe.getMessage());
-          }
-        }
-      }
-      if (isError)
-        throw new Exception("spark grammar wrong");
-    }
+  private Results.Result interpret(String line) {
+
     return (Results.Result) Utils.invokeMethod(
         intp,
         "interpret",
@@ -1223,7 +1190,9 @@ public class SparkInterpreter extends Interpreter {
 
       scala.tools.nsc.interpreter.Results.Result res = null;
       try {
-        res = interpret(incomplete + s);
+        String toRunCmd = incomplete + s;
+        String newCmd = BkdataUtils.coreWordReplace(toRunCmd);
+        res = interpret(newCmd);
       } catch (Exception e) {
         sc.clearJobGroup();
         out.setInterpreterOutput(null);
@@ -1247,13 +1216,16 @@ public class SparkInterpreter extends Interpreter {
     // make sure code does not finish with comment
     if (r == Code.INCOMPLETE) {
       scala.tools.nsc.interpreter.Results.Result res = null;
+      String toRunCmd = incomplete + "\nprint(\"\")";
       try {
-        res = interpret(incomplete + "\nprint(\"\")");
+        String newCmd = BkdataUtils.coreWordReplace(toRunCmd);
+        res = interpret(newCmd);
         r = getResultCode(res);
-      } catch (Exception e) {
-        logger.info("~~ {}", e.getMessage());
+      } catch (Exception e){
+        r = Code.ERROR;
         sc.clearJobGroup();
         out.setInterpreterOutput(null);
+        logger.info("~~ Interpreter exception", e);
         return new InterpreterResult(r, "");
       }
     }
