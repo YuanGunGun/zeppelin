@@ -162,8 +162,10 @@ class BkdataUtils {
       }
     };
     String[] splits = rt_id.split("_");
-    String prefix = fetchHdfsPrefix(rt_id) + splits[0] + "/" + StringUtils.join(splits, "_", 1,
-        splits.length);
+    String biz_id = splits[0];
+    // /kafa/data/biz_id/table_name_biz_id
+    String prefix = fetchHdfsPrefix(rt_id) + biz_id + "/" + StringUtils.join(splits, "_", 1,
+        splits.length) + "_" + biz_id;
     long startTimeMills = dateFormat.parse(start_time).getTime();
     long endTimeMills = dateFormat.parse(end_time).getTime();
     List<String> paths = new LinkedList<>();
