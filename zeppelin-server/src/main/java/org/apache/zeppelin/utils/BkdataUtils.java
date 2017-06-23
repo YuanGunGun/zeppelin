@@ -15,17 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.spark;
+package org.apache.zeppelin.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.yarn.webapp.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.apache.zeppelin.utils.HTTPUtils;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -37,7 +34,7 @@ import java.util.regex.Pattern;
 /**
  * Utility and helper functions for the BKDATA
  */
-class BkdataUtils {
+public class BkdataUtils {
   public static Logger logger = LoggerFactory.getLogger(BkdataUtils.class);
   private static Pattern r = Pattern.compile("sqlc\\.read\\.(parquet|json)\\(.*$");
   private static Pattern rn = Pattern.compile("\\(.*\\)");
