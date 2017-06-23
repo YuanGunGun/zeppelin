@@ -624,7 +624,7 @@ public class Note implements Serializable, ParagraphJobListener {
         add("tspider_ser");
         add("spark");
         add("spark.sql");
-        add("spark.pyspark");
+//        add("spark.pyspark");
       }
     };
     Interpreter intp = factory.getInterpreter(p.getUser(), getId(), requiredReplName);
