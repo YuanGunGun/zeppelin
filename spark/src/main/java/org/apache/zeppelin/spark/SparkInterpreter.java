@@ -63,7 +63,6 @@ import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
 import org.apache.zeppelin.spark.dep.SparkDependencyContext;
 import org.apache.zeppelin.spark.dep.SparkDependencyResolver;
-import org.apache.zeppelin.utils.BkdataUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1188,9 +1187,7 @@ public class SparkInterpreter extends Interpreter {
 
       scala.tools.nsc.interpreter.Results.Result res = null;
       try {
-        String toRunCmd = incomplete + s;
-        String newCmd = BkdataUtils.coreWordReplace(toRunCmd);
-        res = interpret(newCmd);
+        res = interpret(incomplete + s);
       } catch (Exception e) {
         sc.clearJobGroup();
         out.setInterpreterOutput(null);
@@ -1214,18 +1211,8 @@ public class SparkInterpreter extends Interpreter {
     // make sure code does not finish with comment
     if (r == Code.INCOMPLETE) {
       scala.tools.nsc.interpreter.Results.Result res = null;
-      String toRunCmd = incomplete + "\nprint(\"\")";
-      try {
-        String newCmd = BkdataUtils.coreWordReplace(toRunCmd);
-        res = interpret(newCmd);
-        r = getResultCode(res);
-      } catch (Exception e){
-        r = Code.ERROR;
-        sc.clearJobGroup();
-        out.setInterpreterOutput(null);
-        logger.info("~~ Interpreter exception", e);
-        return new InterpreterResult(r, "");
-      }
+      res = interpret(incomplete + "\nprint(\"\")");
+      r = getResultCode(res);
     }
 
     if (r == Code.INCOMPLETE) {
