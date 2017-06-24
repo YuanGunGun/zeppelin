@@ -26,7 +26,7 @@ import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.rest.exception.NotFoundException;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.ticket.TicketContainer;
-import org.apache.zeppelin.utils.HTTPUtils;
+import org.apache.zeppelin.util.HTTPUtils;
 import org.apache.zeppelin.utils.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

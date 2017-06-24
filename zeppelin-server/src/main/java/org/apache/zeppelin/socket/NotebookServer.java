@@ -1611,7 +1611,6 @@ public class NotebookServer extends WebSocketServlet
     Map<String, Object> config = (Map<String, Object>) fromMessage.get("config");
     Paragraph p = setParagraphUsingMessage(note, fromMessage, paragraphId,
         text, title, params, config);
-
     persistAndExecuteSingleParagraph(conn, note, p);
   }
 

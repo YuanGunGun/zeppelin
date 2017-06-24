@@ -1,8 +1,9 @@
-package org.apache.zeppelin.utils;
+package org.apache.zeppelin.util;
 
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,4 +25,15 @@ public class HTTPUtils {
     return getMethod;
   }
 
+  public static PostMethod httpPost(String url, String path, String request)
+      throws IOException {
+    LOG.info("Connecting to {}", url + path);
+    HttpClient httpClient = new HttpClient();
+    PostMethod postMethod = new PostMethod(url + path);
+    postMethod.setRequestBody(request);
+    postMethod.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
+    httpClient.executeMethod(postMethod);
+    LOG.info("{} - {}", postMethod.getStatusCode(), postMethod.getStatusText());
+    return postMethod;
+  }
 }

@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.utils;
+package org.apache.zeppelin.util;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,28 @@ public class BkdataUtils {
   private static Pattern r = Pattern.compile("sqlc\\.read\\.(parquet|json)\\(.*$");
   private static Pattern rn = Pattern.compile("\\(.*\\)");
   private static Gson gson = new Gson();
+
+  public static class DataApiRtn {
+    private boolean result = false;
+    private String message = "";
+
+    public String getMessage() {
+      return message;
+    }
+
+    public void setMessage(String message) {
+      this.message = message;
+    }
+
+    public boolean isResult() {
+      return result;
+
+    }
+
+    public void setResult(boolean result) {
+      this.result = result;
+    }
+  }
 
   /*
   inspired from https://github.com/postgres/pgadmin3/blob/794527d97e2e3b01399954f3b79c8e2585b908dd/
@@ -123,6 +146,72 @@ public class BkdataUtils {
     return queries;
   }
 
+  /**
+   * 检查用户是否具有访问否个note中的某个rt的权限
+   *
+   * @param rt_id
+   * @param note_id
+   * @param operator
+   * @return
+   */
+  public static DataApiRtn checkAccessPrivilege(String rt_id, String note_id, String operator) {
+    DataApiRtn rtn = new DataApiRtn();
+    String request = "{" +
+        "\"app_code\":" + "\"data_analysis\"" +
+        "\"app_secret\":" + "\"Ff?41^Cao^M-gGb*Nx-TQ?M!Ej~jo8kZ*GU@&IZcyVH?Ttu3SP\"" +
+        "\"operator\":" + "\"" + operator + "\"" +
+        "\"note_id\":" + "\"" + note_id + "\"" +
+        "\"result_table_id\":" + "\"" + rt_id + "\"" +
+        "}";
+    try {
+      PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com", "/test/web/notebook/checkAuth/", request);
+      Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(), new TypeToken<Map<String, Object>>() {
+      }.getType());
+      post.releaseConnection();
+      boolean result = (Boolean) resp.get("result");
+      rtn.setResult(result);
+      if (!result) {
+        String msg = (String) resp.get("message");
+        logger.info("{} {} {} auth failed : {}", operator, note_id, rt_id, msg);
+        rtn.setMessage(msg);
+      }
+      return rtn;
+    } catch (IOException ie) {
+      rtn.setMessage(ie.getMessage());
+      logger.info("{} {} {} auth failed : {}", operator, note_id, rt_id, ie.getMessage());
+    }
+    return rtn;
+  }
+
+  public static DataApiRtn callbackNoteRT(String rt_id, String note_id, String operator) {
+    DataApiRtn rtn = new DataApiRtn();
+    String request = "{" +
+        "\"app_code\":" + "\"data_analysis\"" +
+        "\"app_secret\":" + "\"Ff?41^Cao^M-gGb*Nx-TQ?M!Ej~jo8kZ*GU@&IZcyVH?Ttu3SP\"" +
+        "\"operator\":" + "\"" + operator + "\"" +
+        "\"note_id\":" + "\"" + note_id + "\"" +
+        "\"result_table_id\":" + "\"" + rt_id + "\"" +
+        "}";
+    try {
+      PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com", "/test/web/notebook/addNoteRT/", request);
+      Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(), new TypeToken<Map<String, Object>>() {
+      }.getType());
+      post.releaseConnection();
+      boolean result = (Boolean) resp.get("result");
+      rtn.setResult(result);
+      if (!result) {
+        String msg = (String) resp.get("message");
+        logger.info("{} {} {} auth failed : {}", operator, note_id, rt_id, msg);
+        rtn.setMessage(msg);
+      }
+      return rtn;
+    } catch (IOException ie) {
+      rtn.setMessage(ie.getMessage());
+      logger.info("{} {} {} auth failed : {}", operator, note_id, rt_id, ie.getMessage());
+    }
+    return rtn;
+  }
+
   public static String fetchHdfsPrefix(String rt_id) {
     String rtn = "/kafka/data/";
     try {
@@ -172,7 +261,18 @@ public class BkdataUtils {
     return StringUtils.join(paths, ",");
   }
 
-  public static String coreWordReplace(String line) throws Exception {
+  /**
+   * 1、敏感路径替换
+   * 2、权限控制
+   *
+   * @param line
+   * @param note_id
+   * @param userName
+   * @return
+   * @throws Exception
+   */
+  public static String coreWordReplace(String line, String note_id, String userName)
+      throws Exception {
     Matcher m = r.matcher(line);
     if (m.find()) {
       boolean isError = true;
@@ -192,8 +292,9 @@ public class BkdataUtils {
             String left = line.substring(0, line.indexOf("("));
             String right = line.substring(line.indexOf(")"));
             String newCmd = left + "(\"" + newReadArg + "\"" + right;
-            logger.info("~~ new cmd {}", newCmd);
+            logger.info("~~ new cmd - {}", newCmd);
             line = newCmd;
+            callbackNoteRT(rt_id,note_id,userName);
             isError = false;
           } catch (ParseException pe) {
             logger.error("~~ prase read args error - {}", pe.getMessage());
