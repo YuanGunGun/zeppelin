@@ -316,11 +316,6 @@
       <artifactId>powermock-module-junit4</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.zeppelin</groupId>
-      <artifactId>zeppelin-server</artifactId>
-      <version>0.7.3-SNAPSHOT</version>
-    </dependency>
 
   </dependencies>
 
