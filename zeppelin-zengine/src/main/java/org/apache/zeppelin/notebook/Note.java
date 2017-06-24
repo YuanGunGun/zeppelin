@@ -42,6 +42,7 @@ import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.Credentials;
+import org.apache.zeppelin.util.BkdataUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -623,6 +624,7 @@ public class Note implements Serializable, ParagraphJobListener {
         add("tspider_ja");
         add("tspider_ser");
         add("spark");
+        add("sql");
         add("spark.sql");
 //        add("spark.pyspark");
       }
@@ -639,6 +641,41 @@ public class Note implements Serializable, ParagraphJobListener {
       p.setStatus(Job.Status.ERROR);
       throw intpException;
     }
+    try{
+      switch (requiredReplName){
+        case "tspider_gem":
+        case "tspider_gemmobile":
+        case "tspider_ja":
+        case "tspider_ser":
+          break;
+        case "spark":
+          String[] lines = p.getText().split("\n");
+          p.getAuthenticationInfo().getUser();
+          for (int idx = 0; idx < lines.length; idx++) {
+            String line = lines[idx];
+            BkdataUtils.DataApiRtn rtn = BkdataUtils.sparkCoreWordReplace(line, p.getNote().getId(),
+                p.getAuthenticationInfo().getUser());
+            if (rtn.isResult())
+              lines[idx] = rtn.getMessage();
+          }
+          p.setText(StringUtils.join(lines,"\n"));
+          break;
+        case "sql":
+        case "spark.sql":
+          break;
+        case "spark.pyspark":
+          break;
+      }
+    } catch (Exception e){
+      logger.error("Core word replace & access contral - ", e);
+      InterpreterException intpException = new InterpreterException(e.getMessage());
+      InterpreterResult intpResult =
+          new InterpreterResult(InterpreterResult.Code.ERROR, intpException.getMessage());
+      p.setReturn(intpResult, intpException);
+      p.setStatus(Job.Status.ERROR);
+      throw intpException;
+    }
+
     if (p.getConfig().get("enabled") == null || (Boolean) p.getConfig().get("enabled")) {
       p.setAuthenticationInfo(p.getAuthenticationInfo());
       intp.getScheduler().submit(p);

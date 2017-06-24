@@ -271,8 +271,10 @@ public class BkdataUtils {
    * @return
    * @throws Exception
    */
-  public static String coreWordReplace(String line, String note_id, String userName)
+  public static DataApiRtn sparkCoreWordReplace(String line, String note_id, String userName)
       throws Exception {
+    DataApiRtn rtn = new DataApiRtn();
+    rtn.setMessage(line);
     Matcher m = r.matcher(line);
     if (m.find()) {
       boolean isError = true;
@@ -281,29 +283,30 @@ public class BkdataUtils {
         String s = mn.group();
         String toSpilit = s.replace("\"", "").replace("(", "").replace(")", "");
         String[] readArgs = toSpilit.split(",");
-        logger.info("~~ sparksqlInterpreter {}", Arrays.toString(readArgs));
-        //default 3 args : rt_id, start_time, end_time
+        logger.info("~~ Spark interpreter {}", Arrays.toString(readArgs));
         if (readArgs.length == 3) {
           String rt_id = readArgs[0];
+          DataApiRtn cap = checkAccessPrivilege(rt_id, note_id, userName);
+          if (!cap.isResult()) {
+            String errMsg = userName + " access " + rt_id + " in note(" + note_id + ") failed";
+            throw new IllegalAccessException(errMsg);
+          }
           String start_time = readArgs[1];
           String end_time = readArgs[2];
-          try {
-            String newReadArg = sparkReadArgs2HdfsPath(rt_id, start_time, end_time);
-            String left = line.substring(0, line.indexOf("("));
-            String right = line.substring(line.indexOf(")"));
-            String newCmd = left + "(\"" + newReadArg + "\"" + right;
-            logger.info("~~ new cmd - {}", newCmd);
-            line = newCmd;
-            callbackNoteRT(rt_id,note_id,userName);
-            isError = false;
-          } catch (ParseException pe) {
-            logger.error("~~ prase read args error - {}", pe.getMessage());
-          }
+          String newReadArg = sparkReadArgs2HdfsPath(rt_id, start_time, end_time);
+          String left = line.substring(0, line.indexOf("("));
+          String right = line.substring(line.indexOf(")"));
+          String newCmd = left + "(\"" + newReadArg + "\"" + right;
+          logger.info("~~ new cmd - {}", newCmd);
+          rtn.setMessage(newCmd);
+          rtn.setResult(true);
+          callbackNoteRT(rt_id, note_id, userName);
+          isError = false;
         }
       }
       if (isError)
-        throw new Exception("spark grammar wrong");
+        throw new IllegalArgumentException("spark argument wrong");
     }
-    return line;
+    return rtn;
   }
 }
