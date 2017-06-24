@@ -644,28 +644,29 @@ public class Note implements Serializable, ParagraphJobListener {
     }
     try {
       switch (requiredReplName) {
-        case "tspider_gem":
-        case "tspider_gemmobile":
-        case "tspider_ja":
-        case "tspider_ser":
-          break;
-        case "spark":
-          String[] lines = p.getText().split("\n");
-          p.getAuthenticationInfo().getUser();
-          for (int idx = 0; idx < lines.length; idx++) {
-            String line = lines[idx];
-            BkdataUtils.DataApiRtn rtn = BkdataUtils.sparkCoreWordReplace(line, p.getNote().getId(),
-                p.getAuthenticationInfo().getUser());
-            if (rtn.isResult())
-              lines[idx] = rtn.getMessage();
-          }
-          p.setText(StringUtils.join(lines, "\n"));
-          break;
-        case "sql":
-        case "spark.sql":
-          break;
-        case "spark.pyspark":
-          break;
+          case "tspider_gem":
+          case "tspider_gemmobile":
+          case "tspider_ja":
+          case "tspider_ser":
+            break;
+          case "spark":
+            String[] lines = p.getText().split("\n");
+            p.getAuthenticationInfo().getUser();
+            for (int idx = 0; idx < lines.length; idx++) {
+              String line = lines[idx];
+              BkdataUtils.DataApiRtn rtn = BkdataUtils.sparkCoreWordReplace(line,
+                  p.getNote().getId(),
+                  p.getAuthenticationInfo().getUser());
+              if (rtn.isResult())
+                lines[idx] = rtn.getMessage();
+            }
+            p.setText(StringUtils.join(lines, "\n"));
+            break;
+          case "sql":
+          case "spark.sql":
+            break;
+          case "spark.pyspark":
+            break;
       }
     } catch (Exception e) {
       logger.error("Core word replace & access contral - ", e);

@@ -41,6 +41,9 @@ public class BkdataUtils {
   private static Pattern rn = Pattern.compile("\\(.*\\)");
   private static Gson gson = new Gson();
 
+  /**
+   * 内部返回封装
+   */
   public static class DataApiRtn {
     private boolean result = false;
     private String message = "";
@@ -164,9 +167,10 @@ public class BkdataUtils {
         "\"result_table_id\":" + "\"" + rt_id + "\"" +
         "}";
     try {
-      PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com", "/test/web/notebook/checkAuth/", request);
-      Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(), new TypeToken<Map<String, Object>>() {
-      }.getType());
+      PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com",
+          "/test/web/notebook/checkAuth/", request);
+      Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(),
+          new TypeToken<Map<String, Object>>() {}.getType());
       post.releaseConnection();
       boolean result = (Boolean) resp.get("result");
       rtn.setResult(result);
@@ -193,9 +197,10 @@ public class BkdataUtils {
         "\"result_table_id\":" + "\"" + rt_id + "\"" +
         "}";
     try {
-      PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com", "/test/web/notebook/addNoteRT/", request);
-      Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(), new TypeToken<Map<String, Object>>() {
-      }.getType());
+      PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com",
+          "/test/web/notebook/addNoteRT/", request);
+      Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(),
+          new TypeToken<Map<String, Object>>() {}.getType());
       post.releaseConnection();
       boolean result = (Boolean) resp.get("result");
       rtn.setResult(result);
@@ -272,7 +277,7 @@ public class BkdataUtils {
    * @throws Exception
    */
   public static DataApiRtn sparkCoreWordReplace(String line, String note_id, String userName)
-      throws IllegalAccessException, ParseException,IllegalArgumentException {
+      throws IllegalAccessException, ParseException, IllegalArgumentException {
     DataApiRtn rtn = new DataApiRtn();
     rtn.setMessage(line);
     Matcher m = r.matcher(line);
