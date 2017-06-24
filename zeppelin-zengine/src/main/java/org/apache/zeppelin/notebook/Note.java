@@ -21,6 +21,7 @@ import static java.lang.String.format;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -641,8 +642,8 @@ public class Note implements Serializable, ParagraphJobListener {
       p.setStatus(Job.Status.ERROR);
       throw intpException;
     }
-    try{
-      switch (requiredReplName){
+    try {
+      switch (requiredReplName) {
         case "tspider_gem":
         case "tspider_gemmobile":
         case "tspider_ja":
@@ -658,7 +659,7 @@ public class Note implements Serializable, ParagraphJobListener {
             if (rtn.isResult())
               lines[idx] = rtn.getMessage();
           }
-          p.setText(StringUtils.join(lines,"\n"));
+          p.setText(StringUtils.join(lines, "\n"));
           break;
         case "sql":
         case "spark.sql":
@@ -666,7 +667,7 @@ public class Note implements Serializable, ParagraphJobListener {
         case "spark.pyspark":
           break;
       }
-    } catch (Exception e){
+    } catch (Exception e) {
       logger.error("Core word replace & access contral - ", e);
       InterpreterException intpException = new InterpreterException(e.getMessage());
       InterpreterResult intpResult =

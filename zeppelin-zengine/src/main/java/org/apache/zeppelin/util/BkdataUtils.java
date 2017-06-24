@@ -272,7 +272,7 @@ public class BkdataUtils {
    * @throws Exception
    */
   public static DataApiRtn sparkCoreWordReplace(String line, String note_id, String userName)
-      throws Exception {
+      throws IllegalAccessException, ParseException,IllegalArgumentException {
     DataApiRtn rtn = new DataApiRtn();
     rtn.setMessage(line);
     Matcher m = r.matcher(line);
