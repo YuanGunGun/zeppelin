@@ -16,7 +16,6 @@
  */
 package org.apache.zeppelin.rest;
 
-import com.google.gson.Gson;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.annotation.ZeppelinApi;

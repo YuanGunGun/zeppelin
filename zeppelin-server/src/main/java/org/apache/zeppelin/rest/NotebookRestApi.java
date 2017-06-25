@@ -45,10 +45,7 @@ import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.rest.exception.NotFoundException;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
-import org.apache.zeppelin.rest.message.CronRequest;
-import org.apache.zeppelin.rest.message.NewNoteRequest;
-import org.apache.zeppelin.rest.message.NewParagraphRequest;
-import org.apache.zeppelin.rest.message.RunParagraphWithParametersRequest;
+import org.apache.zeppelin.rest.message.*;
 import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.socket.NotebookServer;
@@ -140,6 +137,20 @@ public class NotebookRestApi {
    */
   private void checkIfUserIsOwner(String noteId, String errorMsg) {
     Set<String> userAndRoles = Sets.newHashSet();
+    userAndRoles.add(SecurityUtils.getPrincipal());
+    userAndRoles.addAll(SecurityUtils.getRoles());
+    if (!notebookAuthorization.isOwner(userAndRoles, noteId)) {
+      throw new ForbiddenException(errorMsg);
+    }
+  }
+
+  /**
+   * Check if the current user own the given note.
+   */
+  private void checkIfUserIsOwner(String noteId, String bk_ticket, String errorMsg) throws IOException {
+    BkdataUtils.BKAuth bkAuth = BkdataUtils.convertBKTicket2Auth(bk_ticket);
+    Set<String> userAndRoles = Sets.newHashSet();
+    userAndRoles.add(bkAuth.getUserName());
     userAndRoles.add(SecurityUtils.getPrincipal());
     userAndRoles.addAll(SecurityUtils.getRoles());
     if (!notebookAuthorization.isOwner(userAndRoles, noteId)) {
@@ -374,12 +385,39 @@ public class NotebookRestApi {
   @DELETE
   @Path("{noteId}")
   @ZeppelinApi
-  public Response deleteNote(@PathParam("noteId") String noteId,
-                             @PathParam("bk_ticket") String bk_ticket) throws IOException {
-    LOG.info("Delete note {} {}", noteId, bk_ticket);
+  public Response deleteNote(@PathParam("noteId") String noteId) throws IOException {
+    LOG.info("Delete note {} ", noteId);
     checkIfUserIsOwner(noteId, "Insufficient privileges you cannot delete this note");
-    BkdataUtils.BKAuth bkAuth = BkdataUtils.convertBKTicket2Auth(bk_ticket);
-    AuthenticationInfo subject = new AuthenticationInfo(bkAuth.getUserName());
+    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
+    if (!(noteId.isEmpty())) {
+      Note note = notebook.getNote(noteId);
+      if (note != null) {
+        notebook.removeNote(noteId, subject);
+      }
+    }
+
+    notebookServer.broadcastNoteList(subject, SecurityUtils.getRoles());
+    return new JsonResponse<>(Status.OK, "").build();
+  }
+
+
+  /**
+   * Post delete note REST API
+   *
+   * @param message ID of Note Json
+   * @return JSON with status.OK
+   * @throws IOException
+   */
+  @POST
+  @Path("{noteId}")
+  @ZeppelinApi
+  public Response postDeleteNote(String message) throws IOException {
+    DeleteNoteRequest request = gson.fromJson(message, DeleteNoteRequest.class);
+    String noteId = request.getNoteId();
+    LOG.info("Post Delete note {} ", noteId);
+    checkIfUserIsOwner(noteId, request.getTicket(),
+        "Insufficient privileges you cannot delete this note");
+    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
     if (!(noteId.isEmpty())) {
       Note note = notebook.getNote(noteId);
       if (note != null) {
