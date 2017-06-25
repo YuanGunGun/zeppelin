@@ -54,6 +54,7 @@ import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.socket.NotebookServer;
 import org.apache.zeppelin.types.InterpreterSettingsList;
 import org.apache.zeppelin.user.AuthenticationInfo;
+import org.apache.zeppelin.util.BkdataUtils;
 import org.apache.zeppelin.utils.InterpreterBindingUtils;
 import org.apache.zeppelin.utils.SecurityUtils;
 import org.quartz.CronExpression;
@@ -339,7 +340,8 @@ public class NotebookRestApi {
   public Response createNote(String message) throws IOException {
     LOG.info("Create new note by JSON {}", message);
     NewNoteRequest request = gson.fromJson(message, NewNoteRequest.class);
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
+    BkdataUtils.BKAuth bkAuth = BkdataUtils.convertBKTicket2Auth(request.getTicket());
+    AuthenticationInfo subject = new AuthenticationInfo(bkAuth.getUserName());
     Note note = notebook.createNote(subject);
     List<NewParagraphRequest> initialParagraphs = request.getParagraphs();
     if (initialParagraphs != null) {
@@ -372,10 +374,12 @@ public class NotebookRestApi {
   @DELETE
   @Path("{noteId}")
   @ZeppelinApi
-  public Response deleteNote(@PathParam("noteId") String noteId) throws IOException {
-    LOG.info("Delete note {} ", noteId);
+  public Response deleteNote(@PathParam("noteId") String noteId,
+                             @PathParam("bk_ticket") String bk_ticket) throws IOException {
+    LOG.info("Delete note {} {}", noteId, bk_ticket);
     checkIfUserIsOwner(noteId, "Insufficient privileges you cannot delete this note");
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
+    BkdataUtils.BKAuth bkAuth = BkdataUtils.convertBKTicket2Auth(bk_ticket);
+    AuthenticationInfo subject = new AuthenticationInfo(bkAuth.getUserName());
     if (!(noteId.isEmpty())) {
       Note note = notebook.getNote(noteId);
       if (note != null) {

@@ -17,16 +17,13 @@
 package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.notebook.NotebookAuthorization;
-import org.apache.zeppelin.rest.exception.NotFoundException;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.ticket.TicketContainer;
-import org.apache.zeppelin.util.HTTPUtils;
+import org.apache.zeppelin.util.BkdataUtils;
 import org.apache.zeppelin.utils.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,16 +43,12 @@ import java.util.Map;
 @Produces("application/json")
 public class LoginRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(LoginRestApi.class);
-  private String jdbcRealmUrl = "http://api.leaf.ied.com";
-  private String jdbcRealmPath = "/offline/analysis/authentication?bk_ticket=%s";
-  private Gson gson;
 
   /**
    * Required by Swagger.
    */
   public LoginRestApi() {
     super();
-    gson = new Gson();
   }
 
 
@@ -85,21 +78,9 @@ public class LoginRestApi {
          *使用jdbcRealm中的合法password替换参数传递过来的password
          */
         String bk_ticket = userName;
-        GetMethod getZeppelinUser = HTTPUtils.httpGet(jdbcRealmUrl,
-            String.format(jdbcRealmPath, bk_ticket));
-        Map<String, Object> resp = gson.fromJson(getZeppelinUser.getResponseBodyAsString(),
-            new TypeToken<Map<String, Object>>() {
-            }.getType());
-        boolean result = (Boolean) resp.get("result");
-        if (!result) {
-          String msg = (String) resp.get("message");
-          LOG.error("Call offline api Failed - {}", msg);
-          throw new NotFoundException("make legal user failed");
-        }
-        Map<String, String> dataJdbcRealm = (Map<String, String>) resp.get("data");
-        userName = dataJdbcRealm.get("userName");
-        password = dataJdbcRealm.get("password");
-
+        BkdataUtils.BKAuth bkAuth = BkdataUtils.convertBKTicket2Auth(bk_ticket);
+        userName = bkAuth.getUserName();
+        password = bkAuth.getPassword();
 
         UsernamePasswordToken token = new UsernamePasswordToken(userName, password);
         //      token.setRememberMe(true);

@@ -66,6 +66,63 @@ public class BkdataUtils {
     }
   }
 
+  /**
+   * BK权限类
+   */
+  public static class BKAuth {
+    private String userName;
+    private String password;
+    private String bk_ticket;
+
+    public String getUserName() {
+      return userName;
+    }
+
+    public void setUserName(String userName) {
+      this.userName = userName;
+    }
+
+    public String getPassword() {
+      return password;
+    }
+
+    public void setPassword(String password) {
+      this.password = password;
+    }
+
+    public String getBk_ticket() {
+      return bk_ticket;
+    }
+
+    public void setBk_ticket(String bk_ticket) {
+      this.bk_ticket = bk_ticket;
+    }
+  }
+
+
+  public static BKAuth convertBKTicket2Auth(String bk_ticket) throws IOException {
+    BKAuth bkAuth = new BKAuth();
+    String jdbcRealmUrl = "http://api.leaf.ied.com";
+    String jdbcRealmPath = "/offline/analysis/authentication?bk_ticket=%s";
+    GetMethod getZeppelinUser = HTTPUtils.httpGet(jdbcRealmUrl,
+        String.format(jdbcRealmPath, bk_ticket));
+    Map<String, Object> resp = gson.fromJson(getZeppelinUser.getResponseBodyAsString(),
+        new TypeToken<Map<String, Object>>() {
+        }.getType());
+    boolean result = (Boolean) resp.get("result");
+    if (!result) {
+      String msg = (String) resp.get("message");
+      logger.error("Call offline api Failed - {}", msg);
+      throw new IOException("make legal user failed");
+    }
+    Map<String, String> dataJdbcRealm = (Map<String, String>) resp.get("data");
+    bkAuth.setBk_ticket(bk_ticket);
+    bkAuth.setPassword(dataJdbcRealm.get("password"));
+    bkAuth.setUserName(dataJdbcRealm.get("userName"));
+    return bkAuth;
+  }
+
+
   /*
   inspired from https://github.com/postgres/pgadmin3/blob/794527d97e2e3b01399954f3b79c8e2585b908dd/
   pgadmin/dlg/dlgProperty.cpp#L999-L1045
@@ -170,7 +227,8 @@ public class BkdataUtils {
       PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com",
           "/test/web/notebook/checkAuth/", request);
       Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(),
-          new TypeToken<Map<String, Object>>() {}.getType());
+          new TypeToken<Map<String, Object>>() {
+          }.getType());
       post.releaseConnection();
       boolean result = (Boolean) resp.get("result");
       rtn.setResult(result);
@@ -200,7 +258,8 @@ public class BkdataUtils {
       PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com",
           "/test/web/notebook/addNoteRT/", request);
       Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(),
-          new TypeToken<Map<String, Object>>() {}.getType());
+          new TypeToken<Map<String, Object>>() {
+          }.getType());
       post.releaseConnection();
       boolean result = (Boolean) resp.get("result");
       rtn.setResult(result);

@@ -28,6 +28,7 @@ import org.apache.zeppelin.interpreter.InterpreterOption;
  */
 public class NewNoteRequest {
   String name;
+  String bk_ticket;
   List<NewParagraphRequest> paragraphs;
 
   public NewNoteRequest (){
@@ -41,4 +42,6 @@ public class NewNoteRequest {
   public List<NewParagraphRequest> getParagraphs() {
     return paragraphs;
   }
+
+  public String getTicket() { return bk_ticket; }
 }
