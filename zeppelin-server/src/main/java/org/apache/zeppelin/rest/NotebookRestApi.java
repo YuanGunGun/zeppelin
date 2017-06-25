@@ -147,7 +147,8 @@ public class NotebookRestApi {
   /**
    * Check if the current user own the given note.
    */
-  private void checkIfUserIsOwner(String noteId, String bk_ticket, String errorMsg) throws IOException {
+  private void checkIfUserIsOwner(String noteId, String bk_ticket, String errorMsg)
+      throws IOException {
     BkdataUtils.BKAuth bkAuth = BkdataUtils.convertBKTicket2Auth(bk_ticket);
     Set<String> userAndRoles = Sets.newHashSet();
     userAndRoles.add(bkAuth.getUserName());
