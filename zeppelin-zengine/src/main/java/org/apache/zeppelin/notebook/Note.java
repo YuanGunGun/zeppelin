@@ -648,14 +648,26 @@ public class Note implements Serializable, ParagraphJobListener {
           case "tspider_gemmobile":
           case "tspider_ja":
           case "tspider_ser":
+            ArrayList<String> array = BkdataUtils.splitSqlQueries(p.getText());
+            for (int idx = 0; idx < array.size(); idx++) {
+              String sql = array.get(idx);
+              BkdataUtils.checkSql(sql);
+              BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sql,
+                  p.getNote().getId(),
+                  p.getId(),
+                  p.getAuthenticationInfo().getUser());
+              if (rtn.isResult())
+                array.set(idx, rtn.getMessage());
+            }
+            p.setText(StringUtils.join(array.toArray(),";\n"));
             break;
           case "spark":
             String[] lines = p.getText().split("\n");
-            p.getAuthenticationInfo().getUser();
             for (int idx = 0; idx < lines.length; idx++) {
               String line = lines[idx];
               BkdataUtils.DataApiRtn rtn = BkdataUtils.sparkCoreWordReplace(line,
                   p.getNote().getId(),
+                  p.getId(),
                   p.getAuthenticationInfo().getUser());
               if (rtn.isResult())
                 lines[idx] = rtn.getMessage();

@@ -19,6 +19,7 @@ package org.apache.zeppelin.util;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.lang.StringUtils;
@@ -40,6 +41,15 @@ public class BkdataUtils {
   private static Pattern r = Pattern.compile("sqlc\\.read\\.(parquet|json)\\(.*$");
   private static Pattern rn = Pattern.compile("\\(.*\\)");
   private static Gson gson = new Gson();
+  private static String[] notAllowdSQLPrefix = new String[]{
+      "CREATE",
+      "ALTER",
+      "DROP",
+      "DELETE",
+      "UPDATE",
+      "INSERT",
+      "RENAME"
+  };
 
   /**
    * 内部返回封装
@@ -47,6 +57,7 @@ public class BkdataUtils {
   public static class DataApiRtn {
     private boolean result = false;
     private String message = "";
+
 
     public String getMessage() {
       return message;
@@ -99,6 +110,28 @@ public class BkdataUtils {
     }
   }
 
+  public static void checkSql(String sql) throws IllegalArgumentException {
+    for (String keyWord : notAllowdSQLPrefix) {
+      if (sql.toUpperCase().startsWith(keyWord))
+        throw new IllegalArgumentException(keyWord + " not permit");
+    }
+    //对SHOW做单独处理
+    if (sql.toUpperCase().startsWith("SHOW")) {
+      String[] sqlSplit = sql.split("\\s+");
+      if (sqlSplit.length < 2)
+        throw new IllegalArgumentException("SHOW syntax error");
+      String keyword2nd = sqlSplit[1].toUpperCase();
+      if ("CREATE".equals(keyword2nd))
+        throw new IllegalArgumentException("SHOW CREATE not permit");
+      else if ("COLUMNs".equals(keyword2nd))
+        throw new IllegalArgumentException("SHOW COLUMNS not permit");
+      if ("FULL".equals(keyword2nd) && sqlSplit.length > 2) {
+        String keyword3rd = sqlSplit[2].toUpperCase();
+        if ("COLUMNs".equals(keyword3rd))
+          throw new IllegalArgumentException("SHOW FULL COLUMNS not permit");
+      }
+    }
+  }
 
   public static BKAuth convertBKTicket2Auth(String bk_ticket) throws IOException {
     BKAuth bkAuth = new BKAuth();
@@ -245,13 +278,15 @@ public class BkdataUtils {
     return rtn;
   }
 
-  public static DataApiRtn callbackNoteRT(String rt_id, String note_id, String operator) {
+  public static DataApiRtn callbackNoteRT(String rt_id, String note_id, String paragraph_id,
+                                          String operator) {
     DataApiRtn rtn = new DataApiRtn();
     String request = "{" +
         "\"app_code\":" + "\"data_analysis\"" +
         "\"app_secret\":" + "\"Ff?41^Cao^M-gGb*Nx-TQ?M!Ej~jo8kZ*GU@&IZcyVH?Ttu3SP\"" +
         "\"operator\":" + "\"" + operator + "\"" +
         "\"note_id\":" + "\"" + note_id + "\"" +
+        "\"paragraph_id\":" + "\"" + paragraph_id + "\"" +
         "\"result_table_id\":" + "\"" + rt_id + "\"" +
         "}";
     try {
@@ -314,8 +349,7 @@ public class BkdataUtils {
     String[] splits = rt_id.split("_");
     String biz_id = splits[0];
     // /kafa/data/biz_id/table_name_biz_id
-    String prefix = fetchHdfsPrefix(rt_id) + biz_id + "/" + StringUtils.join(splits, "_", 1,
-        splits.length) + "_" + biz_id;
+    String prefix = fetchHdfsPrefix(rt_id) + biz_id + "/" + resultTableConvert(rt_id);
     long startTimeMills = dateFormat.parse(start_time).getTime();
     long endTimeMills = dateFormat.parse(end_time).getTime();
     List<String> paths = new LinkedList<>();
@@ -335,7 +369,8 @@ public class BkdataUtils {
    * @return
    * @throws Exception
    */
-  public static DataApiRtn sparkCoreWordReplace(String line, String note_id, String userName)
+  public static DataApiRtn sparkCoreWordReplace(String line, String note_id, String paragraph_id,
+                                                String userName)
       throws IllegalAccessException, ParseException, IllegalArgumentException {
     DataApiRtn rtn = new DataApiRtn();
     rtn.setMessage(line);
@@ -364,7 +399,7 @@ public class BkdataUtils {
           logger.info("~~ new cmd - {}", newCmd);
           rtn.setMessage(newCmd);
           rtn.setResult(true);
-          callbackNoteRT(rt_id, note_id, userName);
+          callbackNoteRT(rt_id, note_id, paragraph_id, userName);
           isError = false;
         }
       }
@@ -373,4 +408,87 @@ public class BkdataUtils {
     }
     return rtn;
   }
+
+  public static boolean isInteger(String str) {
+    Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
+    return pattern.matcher(str).matches();
+  }
+
+  public static List<String> parseSQLTablename(String sql) throws IOException {
+    String url = "http://api.leaf.ied.com";
+    String path = "/offline/sql/find_table_name?sql=%s";
+    GetMethod getZeppelinUser = HTTPUtils.httpGet(url,
+        String.format(path, new String(Base64.encodeBase64(sql.getBytes()))));
+    Map<String, Object> resp = gson.fromJson(getZeppelinUser.getResponseBodyAsString(),
+        new TypeToken<Map<String, Object>>() {
+        }.getType());
+    boolean result = (Boolean) resp.get("result");
+    if (!result) {
+      String msg = (String) resp.get("message");
+      logger.error("Call offline api Failed - {}", msg);
+      throw new IOException("Parse SQL error");
+    }
+    return (List<String>) resp.get("data");
+  }
+
+  /**
+   * biz_id_table_name to table_name_biz_id
+   *
+   * @param rt_id
+   * @return
+   */
+  public static String resultTableConvert(String rt_id) {
+    String[] rtSplit = rt_id.split("_");
+    if (rtSplit.length < 2)
+      throw new IllegalArgumentException("Result table syntax error");
+    return StringUtils.join(rtSplit, "_", 1, rtSplit.length) + "_" + rtSplit[0];
+  }
+
+  public static DataApiRtn jdbcCoreWorkReplace(String sql, String note_id, String paragrapth_id,
+                                               String userName)
+      throws IOException,IllegalAccessException {
+    DataApiRtn rtn = new DataApiRtn();
+    rtn.setMessage(sql);
+    rtn.setResult(true);
+    String uppderSQL = sql.toUpperCase();
+    if (uppderSQL.startsWith("SELECT")) {
+      for (String tableName : parseSQLTablename(sql)) {
+        DataApiRtn cap = checkAccessPrivilege(tableName, note_id, userName);
+        if (!cap.isResult()) {
+          String errMsg = userName + " access " + tableName + " in note(" + note_id + ") failed";
+          throw new IllegalAccessException(errMsg);
+        }
+        sql = sql.replace(tableName, resultTableConvert(tableName));
+      }
+      rtn.setMessage(sql);
+    } else if (uppderSQL.startsWith("USE")) {
+      String[] useSplit = sql.split("\\s+");
+      if (useSplit.length != 2)
+        throw new IllegalArgumentException("Use syntax error");
+      String biz_id = useSplit[1];
+      if (!isInteger(biz_id))
+        throw new IllegalArgumentException(String.format("Biz_id %s error", biz_id));
+      useSplit[1] = "mapleleaf_" + biz_id;
+      rtn.setMessage(StringUtils.join(useSplit, " "));
+    } else if (uppderSQL.startsWith("DESC") || uppderSQL.startsWith("DESCRIBE")) {
+      String[] descSplit = sql.split("\\s+");
+      if (descSplit.length != 2)
+        throw new IllegalArgumentException("DESCRIBE syntax error");
+      String rt_id = descSplit[1];
+      descSplit[1] = resultTableConvert(rt_id);
+      DataApiRtn cap = checkAccessPrivilege(rt_id, note_id, userName);
+      if (!cap.isResult()) {
+        String errMsg = userName + " access " + rt_id + " in note(" + note_id + ") failed";
+        throw new IllegalAccessException(errMsg);
+      }
+      callbackNoteRT(rt_id, note_id, paragrapth_id, userName);
+      rtn.setMessage(StringUtils.join(descSplit, " "));
+    } else if (uppderSQL.startsWith("SHOW")) {
+      //pass show tables
+    } else
+      rtn.setResult(false);
+    return rtn;
+  }
+
+
 }
