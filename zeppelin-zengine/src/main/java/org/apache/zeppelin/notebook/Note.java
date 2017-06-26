@@ -612,7 +612,6 @@ public class Note implements Serializable, ParagraphJobListener {
     }
 
     String requiredReplName = p.getRequiredReplName();
-    logger.info("~~ requiredReplName : {}", requiredReplName);
     /**
      * ctongfu@gmail.com
      * 控制可用的repl范围
@@ -633,6 +632,8 @@ public class Note implements Serializable, ParagraphJobListener {
     Interpreter intp = factory.getInterpreter(p.getUser(), getId(), requiredReplName);
 
     if (intp == null || !allowedRepl.contains(requiredReplName)) {
+      logger.info("~~ intp not found debug :" +
+          " {} {}", intp == null, !allowedRepl.contains(requiredReplName));
       String intpExceptionMsg =
           p.getJobName() + "'s Interpreter " + requiredReplName + " not found";
       InterpreterException intpException = new InterpreterException(intpExceptionMsg);
