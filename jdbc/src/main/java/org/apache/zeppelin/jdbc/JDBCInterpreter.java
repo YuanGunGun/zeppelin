@@ -630,6 +630,10 @@ public class JDBCInterpreter extends Interpreter {
       } else {
         logger.error("Cannot run " + sql, e);
         String errorMsg = Throwables.getStackTraceAsString(e);
+        /**ctongfu@gmail.com
+         * todo mysql 异常返回处理
+         */
+        errorMsg = errorMsg.replace("mapleleaf_","").replace("batch_tspider_","");
         try {
           closeDBPool(user, propertyKey);
         } catch (SQLException e1) {
