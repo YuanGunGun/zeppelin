@@ -410,12 +410,12 @@ public class NotebookRestApi {
    * @throws IOException
    */
   @POST
-  @Path("{noteId}/postDelete")
+  @Path("delete")
   @ZeppelinApi
   public Response postDeleteNote(String message) throws IOException {
+    LOG.info("Post Delete note by json {} ", message);
     DeleteNoteRequest request = gson.fromJson(message, DeleteNoteRequest.class);
     String noteId = request.getNoteId();
-    LOG.info("Post Delete note {} ", noteId);
     checkIfUserIsOwner(noteId, request.getTicket(),
         "Insufficient privileges you cannot delete this note");
     AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
@@ -429,6 +429,7 @@ public class NotebookRestApi {
     notebookServer.broadcastNoteList(subject, SecurityUtils.getRoles());
     return new JsonResponse<>(Status.OK, "").build();
   }
+
 
   /**
    * Clone note REST API
