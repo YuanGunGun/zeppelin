@@ -659,7 +659,7 @@ public class Note implements Serializable, ParagraphJobListener {
               if (rtn.isResult())
                 array.set(idx, rtn.getMessage());
             }
-            p.setText(StringUtils.join(array.toArray(),";\n"));
+            p.setText(StringUtils.join(array.toArray(), ";\n"));
             break;
           case "spark":
             String[] lines = p.getText().split("\n");
