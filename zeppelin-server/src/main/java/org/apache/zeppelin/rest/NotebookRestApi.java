@@ -410,7 +410,7 @@ public class NotebookRestApi {
    * @throws IOException
    */
   @POST
-  @Path("{noteId}")
+  @Path("{noteId}/postDelete")
   @ZeppelinApi
   public Response postDeleteNote(String message) throws IOException {
     DeleteNoteRequest request = gson.fromJson(message, DeleteNoteRequest.class);
