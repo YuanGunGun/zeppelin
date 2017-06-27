@@ -643,58 +643,6 @@ public class Note implements Serializable, ParagraphJobListener {
       p.setStatus(Job.Status.ERROR);
       throw intpException;
     }
-//    Properties prop = new Properties();
-//    prop.setProperty("note_id", p.getNote().getId());
-//    prop.setProperty("paragraph_id", p.getId());
-//    prop.setProperty("userName", p.getAuthenticationInfo().getUser());
-//    intp.setProperty(prop);
-//    try {
-//      switch (requiredReplName) {
-//          case "tspider_gem":
-//          case "tspider_gemmobile":
-//          case "tspider_ja":
-//          case "tspider_ser":
-//            ArrayList<String> array = BkdataUtils.splitSqlQueries(p.getText());
-//            for (int idx = 0; idx < array.size(); idx++) {
-//              String sql = array.get(idx);
-//              BkdataUtils.checkSql(sql);
-//              BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sql,
-//                  p.getNote().getId(),
-//                  p.getId(),
-//                  p.getAuthenticationInfo().getUser());
-//              if (rtn.isResult())
-//                array.set(idx, rtn.getMessage());
-//            }
-//            p.setText(StringUtils.join(array.toArray(), ";\n"));
-//            break;
-//          case "spark":
-//            String[] lines = p.getText().split("\n");
-//            for (int idx = 0; idx < lines.length; idx++) {
-//              String line = lines[idx];
-//              BkdataUtils.DataApiRtn rtn = BkdataUtils.sparkCoreWordReplace(line,
-//                  p.getNote().getId(),
-//                  p.getId(),
-//                  p.getAuthenticationInfo().getUser());
-//              if (rtn.isResult())
-//                lines[idx] = rtn.getMessage();
-//            }
-//            p.setText(StringUtils.join(lines, "\n"));
-//            break;
-//          case "sql":
-//          case "spark.sql":
-//            break;
-//          case "spark.pyspark":
-//            break;
-//      }
-//    } catch (Exception e) {
-//      logger.error("Core word replace & access contral - ", e);
-//      InterpreterException intpException = new InterpreterException(e.getMessage());
-//      InterpreterResult intpResult =
-//          new InterpreterResult(InterpreterResult.Code.ERROR, intpException.getMessage());
-//      p.setReturn(intpResult, intpException);
-//      p.setStatus(Job.Status.ERROR);
-//      throw intpException;
-//    }
 
     if (p.getConfig().get("enabled") == null || (Boolean) p.getConfig().get("enabled")) {
       p.setAuthenticationInfo(p.getAuthenticationInfo());
