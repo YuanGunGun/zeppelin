@@ -1216,7 +1216,7 @@ public class SparkInterpreter extends Interpreter {
         logger.info("Interpreter exception", e);
         InterpreterResult intpResult = new InterpreterResult(Code.ERROR);
         if (e instanceof FileNotFoundException){
-          intpResult.add("");
+          intpResult.add("对应时间范围内没有数据");
         }
         return new InterpreterResult(Code.ERROR, InterpreterUtils.getMostRelevantMessage(e));
       }
