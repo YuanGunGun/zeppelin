@@ -481,6 +481,7 @@ public class BkdataUtils {
   public static DataApiRtn jdbcCoreWorkReplace(String sql, String note_id, String paragrapth_id,
                                                String userName)
       throws IOException, IllegalAccessException {
+    logger.info("sql : {}", sql);
     DataApiRtn rtn = new DataApiRtn();
     rtn.setMessage(sql);
     rtn.setResult(false);
