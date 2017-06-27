@@ -558,19 +558,7 @@ public class JDBCInterpreter extends Interpreter {
 
   private InterpreterResult executeSql(String propertyKey, String sql,
       InterpreterContext interpreterContext) {
-    boolean isReplaceOutput = false;
-    try {
-      BkdataUtils.checkSql(sql);
-      BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sql,
-          interpreterContext.getNoteId(),
-          interpreterContext.getParagraphId(),
-          interpreterContext.getAuthenticationInfo().getUser());
-      sql = rtn.getMessage();
-      isReplaceOutput = rtn.isResult();
-    } catch (Exception e) {
-      logger.error("JDBC Interpreter bkdata predo - ", e);
-      return new InterpreterResult(Code.ERROR, e.getMessage());
-    }
+
 
     Connection connection;
     Statement statement;
@@ -589,6 +577,24 @@ public class JDBCInterpreter extends Interpreter {
       ArrayList<String> multipleSqlArray = splitSqlQueries(sql);
       for (int i = 0; i < multipleSqlArray.size(); i++) {
         String sqlToExecute = multipleSqlArray.get(i);
+
+        /**
+         * ctongfu@gmail.com
+         */
+        boolean isReplaceOutput;
+        try {
+          BkdataUtils.checkSql(sqlToExecute);
+          BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sqlToExecute,
+              interpreterContext.getNoteId(),
+              interpreterContext.getParagraphId(),
+              interpreterContext.getAuthenticationInfo().getUser());
+          sql = rtn.getMessage();
+          isReplaceOutput = rtn.isResult();
+        } catch (Exception e) {
+          logger.error("JDBC Interpreter bkdata predo - ", e);
+          return new InterpreterResult(Code.ERROR, e.getMessage());
+        }
+
         statement = connection.createStatement();
         if (statement == null) {
           return new InterpreterResult(Code.ERROR, "Prefix not found.");
