@@ -42,14 +42,14 @@ public class BkdataUtils {
   private static Pattern rn = Pattern.compile("\\(.*\\)");
   private static Gson gson = new Gson();
   private static String[] notAllowdSQLPrefix = new String[]{
-      "CREATE",
-      "ALTER",
-      "DROP",
-      "DELETE",
-      "UPDATE",
-      "INSERT",
-      "RENAME",
-      "KILL"
+    "CREATE",
+    "ALTER",
+    "DROP",
+    "DELETE",
+    "UPDATE",
+    "INSERT",
+    "RENAME",
+    "KILL"
   };
 
   /**
