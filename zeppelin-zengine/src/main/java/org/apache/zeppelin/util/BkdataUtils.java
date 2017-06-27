@@ -131,9 +131,9 @@ public class BkdataUtils {
             if (sqlSplit.length > 2) {
               String keyword3rt = sqlSplit[2].toUpperCase();
               switch (keyword3rt) {
-                case "COLUMNS":
-                  throw new IllegalArgumentException(
-                      String.format("SHOW FULL %s not permit", keyword3rt));
+                  case "COLUMNS":
+                    throw new IllegalArgumentException(
+                        String.format("SHOW FULL %s not permit", keyword3rt));
               }
             } else
               throw new IllegalArgumentException("SHOW FULL syntax error");
