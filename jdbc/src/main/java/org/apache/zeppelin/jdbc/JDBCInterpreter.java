@@ -36,12 +36,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.common.base.Throwables;
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnectionFactory;
 import org.apache.commons.dbcp2.PoolingDriver;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.hadoop.conf.Configuration;
@@ -57,6 +60,7 @@ import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
 import org.apache.zeppelin.user.UserCredentials;
 import org.apache.zeppelin.user.UsernamePassword;
+import org.apache.zeppelin.util.BkdataUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -456,7 +460,7 @@ public class JDBCInterpreter extends Interpreter {
     return null;
   }
 
-  private String getResults(ResultSet resultSet, boolean isTableType)
+  private String getResults(ResultSet resultSet, boolean isTableType, boolean isBkdataReplace)
       throws SQLException {
     ResultSetMetaData md = resultSet.getMetaData();
     StringBuilder msg;
@@ -485,7 +489,7 @@ public class JDBCInterpreter extends Interpreter {
         } else {
           resultValue = resultSet.getString(i);
         }
-        msg.append(replaceReservedChars(resultValue));
+        msg.append(replaceReservedChars(resultValue, isBkdataReplace));
         if (i != md.getColumnCount()) {
           msg.append(TAB);
         }
@@ -551,8 +555,23 @@ public class JDBCInterpreter extends Interpreter {
     return queries;
   }
 
+
   private InterpreterResult executeSql(String propertyKey, String sql,
       InterpreterContext interpreterContext) {
+    boolean isReplaceOutput = false;
+    try {
+      BkdataUtils.checkSql(sql);
+      BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sql,
+          interpreterContext.getNoteId(),
+          interpreterContext.getParagraphId(),
+          interpreterContext.getAuthenticationInfo().getUser());
+      sql = rtn.getMessage();
+      isReplaceOutput = rtn.isResult();
+    } catch (Exception e) {
+      logger.error("JDBC Interpreter bkdata predo - ", e);
+      return new InterpreterResult(Code.ERROR, e.getMessage());
+    }
+
     Connection connection;
     Statement statement;
     ResultSet resultSet = null;
@@ -589,8 +608,9 @@ public class JDBCInterpreter extends Interpreter {
               interpreterResult.add(InterpreterResult.Type.TEXT,
                   "Query executed successfully.");
             } else {
-              interpreterResult.add(
-                  getResults(resultSet, !containsIgnoreCase(sqlToExecute, EXPLAIN_PREDICATE)));
+              interpreterResult.add(getResults(resultSet,
+                  !containsIgnoreCase(sqlToExecute, EXPLAIN_PREDICATE),
+                  isReplaceOutput));
             }
           } else {
             // Response contains either an update count or there are no results.
@@ -672,14 +692,33 @@ public class JDBCInterpreter extends Interpreter {
     return executeSql(propertyKey, sql, interpreterContext);
   }
 
+
+  private String replaceReservedChars(String str, boolean isBkdataReplace) {
+    if (str == null) {
+      return EMPTY_COLUMN_VALUE;
+    }
+    String rtn = str.replace(TAB, WHITESPACE).replace(NEWLINE, WHITESPACE);
+    if (isBkdataReplace) {
+      if (rtn.startsWith("mapleleaf_"))
+        rtn = rtn.replace("mapleleaf_", "");
+      else {
+        Pattern r = Pattern.compile("^\\s*[a-z]+[a-z0-9A-Z_]+_\\d+\\s*$");
+        Matcher m = r.matcher(str);
+        if (m.find()) {
+          //table_name_biz_id to biz_id_table_name
+          String[] sp = rtn.split("_");
+          rtn = sp[sp.length - 1] + "_" + StringUtils.join(sp, "_", 0, sp.length - 1);
+        }
+      }
+    }
+    return rtn;
+  }
+
   /**
    * For %table response replace Tab and Newline characters from the content.
    */
   private String replaceReservedChars(String str) {
-    if (str == null) {
-      return EMPTY_COLUMN_VALUE;
-    }
-    return str.replace(TAB, WHITESPACE).replace(NEWLINE, WHITESPACE);
+    return replaceReservedChars(str, false);
   }
 
   @Override

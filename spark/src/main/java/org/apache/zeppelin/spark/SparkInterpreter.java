@@ -63,6 +63,7 @@ import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
 import org.apache.zeppelin.spark.dep.SparkDependencyContext;
 import org.apache.zeppelin.spark.dep.SparkDependencyResolver;
+import org.apache.zeppelin.util.BkdataUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -839,7 +840,7 @@ public class SparkInterpreter extends Interpreter {
       sqlc = getSQLContext();
 
       dep = getDependencyResolver();
-      
+
       hooks = getInterpreterGroup().getInterpreterHookRegistry();
 
       z = new ZeppelinContext(sc, sqlc, null, dep, hooks,
@@ -1160,7 +1161,27 @@ public class SparkInterpreter extends Interpreter {
     }
   }
 
+  private String[] bkdataPredo(String[] lines, InterpreterContext context) throws Exception {
+    for (int idx = 0; idx < lines.length; idx++) {
+      String line = lines[idx];
+      BkdataUtils.DataApiRtn rtn = BkdataUtils.sparkCoreWordReplace(line,
+          context.getNoteId(),
+          context.getParagraphId(),
+          context.getAuthenticationInfo().getUser());
+      if (rtn.isResult())
+        lines[idx] = rtn.getMessage();
+    }
+    return lines;
+  }
+
   public InterpreterResult interpretInput(String[] lines, InterpreterContext context) {
+    try {
+      lines = bkdataPredo(lines, context);
+    } catch (Exception e) {
+      logger.error("Spark Interpreter bkdata predo - ", e);
+      return new InterpreterResult(Code.ERROR, e.getMessage());
+    }
+
     SparkEnv.set(env);
 
     String[] linesToRun = new String[lines.length];

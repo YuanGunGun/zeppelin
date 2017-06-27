@@ -42,13 +42,14 @@ public class BkdataUtils {
   private static Pattern rn = Pattern.compile("\\(.*\\)");
   private static Gson gson = new Gson();
   private static String[] notAllowdSQLPrefix = new String[]{
-    "CREATE",
-    "ALTER",
-    "DROP",
-    "DELETE",
-    "UPDATE",
-    "INSERT",
-    "RENAME"
+      "CREATE",
+      "ALTER",
+      "DROP",
+      "DELETE",
+      "UPDATE",
+      "INSERT",
+      "RENAME",
+      "KILL"
   };
 
   /**
@@ -121,10 +122,27 @@ public class BkdataUtils {
       if (sqlSplit.length < 2)
         throw new IllegalArgumentException("SHOW syntax error");
       String keyword2nd = sqlSplit[1].toUpperCase();
+      switch (keyword2nd) {
+        case "CREATE":
+        case "COLUMNS":
+        case "TABLE":
+          throw new IllegalArgumentException(String.format("SHOW %s not permit", keyword2nd));
+        case "FULL":
+          if (sqlSplit.length > 2) {
+            String keyword3rt = sqlSplit[2].toUpperCase();
+            switch (keyword3rt) {
+              case "COLUMNS":
+                throw new IllegalArgumentException(
+                    String.format("SHOW FULL %s not permit", keyword3rt));
+            }
+          } else
+            throw new IllegalArgumentException("SHOW FULL syntax error");
+      }
       if ("CREATE".equals(keyword2nd))
         throw new IllegalArgumentException("SHOW CREATE not permit");
       else if ("COLUMNs".equals(keyword2nd))
         throw new IllegalArgumentException("SHOW COLUMNS not permit");
+
       if ("FULL".equals(keyword2nd) && sqlSplit.length > 2) {
         String keyword3rd = sqlSplit[2].toUpperCase();
         if ("COLUMNs".equals(keyword3rd))
@@ -250,10 +268,10 @@ public class BkdataUtils {
   public static DataApiRtn checkAccessPrivilege(String rt_id, String note_id, String operator) {
     DataApiRtn rtn = new DataApiRtn();
     String request = "{" +
-        "\"app_code\":" + "\"data_analysis\"" +
-        "\"app_secret\":" + "\"Ff?41^Cao^M-gGb*Nx-TQ?M!Ej~jo8kZ*GU@&IZcyVH?Ttu3SP\"" +
-        "\"operator\":" + "\"" + operator + "\"" +
-        "\"note_id\":" + "\"" + note_id + "\"" +
+        "\"app_code\":" + "\"data_analysis\"," +
+        "\"app_secret\":" + "\"Ff?41^Cao^M-gGb*Nx-TQ?M!Ej~jo8kZ*GU@&IZcyVH?Ttu3SP\"," +
+        "\"operator\":" + "\"" + operator + "\"," +
+        "\"note_id\":" + "\"" + note_id + "\"," +
         "\"result_table_id\":" + "\"" + rt_id + "\"" +
         "}";
     try {
@@ -282,11 +300,11 @@ public class BkdataUtils {
                                           String operator) {
     DataApiRtn rtn = new DataApiRtn();
     String request = "{" +
-        "\"app_code\":" + "\"data_analysis\"" +
-        "\"app_secret\":" + "\"Ff?41^Cao^M-gGb*Nx-TQ?M!Ej~jo8kZ*GU@&IZcyVH?Ttu3SP\"" +
-        "\"operator\":" + "\"" + operator + "\"" +
-        "\"note_id\":" + "\"" + note_id + "\"" +
-        "\"paragraph_id\":" + "\"" + paragraph_id + "\"" +
+        "\"app_code\":" + "\"data_analysis\"," +
+        "\"app_secret\":" + "\"Ff?41^Cao^M-gGb*Nx-TQ?M!Ej~jo8kZ*GU@&IZcyVH?Ttu3SP\"," +
+        "\"operator\":" + "\"" + operator + "\"," +
+        "\"note_id\":" + "\"" + note_id + "\"," +
+        "\"paragraph_id\":" + "\"" + paragraph_id + "\"," +
         "\"result_table_id\":" + "\"" + rt_id + "\"" +
         "}";
     try {
@@ -366,7 +384,10 @@ public class BkdataUtils {
    * @param line
    * @param note_id
    * @param userName
-   * @return
+   * @return {
+   *   message : scala code
+   *   result : 是否需要替换输入
+   * }
    * @throws Exception
    */
   public static DataApiRtn sparkCoreWordReplace(String line, String note_id, String paragraph_id,
@@ -444,12 +465,25 @@ public class BkdataUtils {
     return StringUtils.join(rtSplit, "_", 1, rtSplit.length) + "_" + rtSplit[0];
   }
 
+  /**
+   *
+   * @param sql
+   * @param note_id
+   * @param paragrapth_id
+   * @param userName
+   * @return {
+   *   message: sql
+   *   result : 是否需要替换输出
+   * }
+   * @throws IOException
+   * @throws IllegalAccessException
+   */
   public static DataApiRtn jdbcCoreWorkReplace(String sql, String note_id, String paragrapth_id,
                                                String userName)
       throws IOException, IllegalAccessException {
     DataApiRtn rtn = new DataApiRtn();
     rtn.setMessage(sql);
-    rtn.setResult(true);
+    rtn.setResult(false);
     String uppderSQL = sql.toUpperCase();
     if (uppderSQL.startsWith("SELECT")) {
       for (String tableName : parseSQLTablename(sql)) {
@@ -485,8 +519,16 @@ public class BkdataUtils {
       rtn.setMessage(StringUtils.join(descSplit, " "));
     } else if (uppderSQL.startsWith("SHOW")) {
       //pass show tables
-    } else
-      rtn.setResult(false);
+      String[] showSplit = uppderSQL.split("\\s+");
+      if (showSplit.length != 2)
+        throw new IllegalArgumentException("SHOW syntax error");
+      String keyword2nd = showSplit[1];
+      //SHOW TABLES 或 SHOW FULL TABLES 需要替换输出
+      if ("TABLES".equals(keyword2nd) || "DATABASES".equals(keyword2nd) ||
+          ("FULL".equals(keyword2nd) && showSplit.length > 2 && "TABLES".equals(showSplit[2]))) {
+        rtn.setResult(true);
+      }
+    }
     return rtn;
   }
 
