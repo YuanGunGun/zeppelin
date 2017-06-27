@@ -589,7 +589,7 @@ public class JDBCInterpreter extends Interpreter {
               interpreterContext.getParagraphId(),
               interpreterContext.getAuthenticationInfo().getUser());
           sqlToExecute = rtn.getMessage();
-          logger.info("sqlToExecute {}", sqlToExecute);
+          logger.info("real sql to execute : {}", sqlToExecute);
           isReplaceOutput = rtn.isResult();
         } catch (Exception e) {
           logger.error("JDBC Interpreter bkdata predo - ", e);

@@ -31,11 +31,13 @@ public class Main {
 //        }.getType());
 //    List<String> tables = (List<String>)resp.get("data");
 //    System.out.println(tables);
-    String test = "a1f2f105_abc_123";
-    Pattern r = Pattern.compile("^\\s*[a-z]+[a-z0-9A-Z_]+_\\d+\\s*$");
-    Matcher m = r.matcher(test);
-    if (m.find()){
-      System.out.println(m.group());
-    }
+//    String test = "a1f2f105_abc_123";
+//    Pattern r = Pattern.compile("^\\s*[a-z]+[a-z0-9A-Z_]+_\\d+\\s*$");
+//    Matcher m = r.matcher(test);
+//    if (m.find()){
+//      System.out.println(m.group());
+//    }
+    String tmp = "\nshow tables; ";
+    System.out.println("1"+tmp.trim()+"1");
   }
 }
