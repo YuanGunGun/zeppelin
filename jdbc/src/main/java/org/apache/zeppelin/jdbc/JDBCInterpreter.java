@@ -588,7 +588,8 @@ public class JDBCInterpreter extends Interpreter {
               interpreterContext.getNoteId(),
               interpreterContext.getParagraphId(),
               interpreterContext.getAuthenticationInfo().getUser());
-          sql = rtn.getMessage();
+          sqlToExecute = rtn.getMessage();
+          logger.info("sqlToExecute {}", sqlToExecute);
           isReplaceOutput = rtn.isResult();
         } catch (Exception e) {
           logger.error("JDBC Interpreter bkdata predo - ", e);

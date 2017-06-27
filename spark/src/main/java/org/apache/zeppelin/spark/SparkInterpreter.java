@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.base.Joiner;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.vfs2.FileNotFoundException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
@@ -1213,6 +1214,10 @@ public class SparkInterpreter extends Interpreter {
         sc.clearJobGroup();
         out.setInterpreterOutput(null);
         logger.info("Interpreter exception", e);
+        InterpreterResult intpResult = new InterpreterResult(Code.ERROR);
+        if (e instanceof FileNotFoundException){
+          intpResult.add("");
+        }
         return new InterpreterResult(Code.ERROR, InterpreterUtils.getMostRelevantMessage(e));
       }
 
