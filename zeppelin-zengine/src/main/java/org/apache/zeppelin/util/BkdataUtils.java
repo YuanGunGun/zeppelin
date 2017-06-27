@@ -276,7 +276,7 @@ public class BkdataUtils {
         "}";
     try {
       PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com",
-          "/test/web/notebook/checkAuth/", request);
+          "/prod/web/notebook/checkAuth/", request);
       Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(),
           new TypeToken<Map<String, Object>>() {
           }.getType());
@@ -309,7 +309,7 @@ public class BkdataUtils {
         "}";
     try {
       PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com",
-          "/test/web/notebook/addNoteRT/", request);
+          "/prod/web/notebook/addNoteRT/", request);
       Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(),
           new TypeToken<Map<String, Object>>() {
           }.getType());
