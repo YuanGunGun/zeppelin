@@ -702,7 +702,7 @@ public class JDBCInterpreter extends Interpreter {
       if (rtn.startsWith("mapleleaf_"))
         rtn = rtn.replace("mapleleaf_", "");
       else {
-        Pattern r = Pattern.compile("^\\s*[a-z]+[a-z0-9A-Z_]+_\\d+\\s*$");
+        Pattern r = Pattern.compile("^\\s*[a-zA-Z]+[a-z0-9A-Z_]+_\\d+\\s*$");
         Matcher m = r.matcher(str);
         if (m.find()) {
           //table_name_biz_id to biz_id_table_name
