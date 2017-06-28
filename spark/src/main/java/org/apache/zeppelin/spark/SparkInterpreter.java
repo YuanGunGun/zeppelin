@@ -1221,6 +1221,13 @@ public class SparkInterpreter extends Interpreter {
           intpResult.add(InterpreterUtils.getMostRelevantMessage(e));
         }
         return intpResult;
+      } catch (AssertionError e) {
+        sc.clearJobGroup();
+        out.setInterpreterOutput(null);
+        logger.info("Interpreter error", e);
+        InterpreterResult intpResult = new InterpreterResult(Code.ERROR);
+        intpResult.add("结果表在对应时间范围内没有数据");
+        return intpResult;
       }
 
       r = getResultCode(res);
