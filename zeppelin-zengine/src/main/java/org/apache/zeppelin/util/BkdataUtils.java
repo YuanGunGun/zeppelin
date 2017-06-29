@@ -42,14 +42,14 @@ public class BkdataUtils {
   private static Pattern rn = Pattern.compile("\\(.*\\)");
   private static Gson gson = new Gson();
   private static String[] notAllowdSQLPrefix = new String[]{
-    "CREATE",
-    "ALTER",
-    "DROP",
-    "DELETE",
-    "UPDATE",
-    "INSERT",
-    "RENAME",
-    "KILL"
+      "CREATE",
+      "ALTER",
+      "DROP",
+      "DELETE",
+      "UPDATE",
+      "INSERT",
+      "RENAME",
+      "KILL"
   };
 
   /**
@@ -123,20 +123,20 @@ public class BkdataUtils {
         throw new IllegalArgumentException("SHOW syntax error");
       String keyword2nd = sqlSplit[1].toUpperCase();
       switch (keyword2nd) {
-          case "CREATE":
-          case "COLUMNS":
-          case "TABLE":
-            throw new IllegalArgumentException(String.format("SHOW %s not permit", keyword2nd));
-          case "FULL":
-            if (sqlSplit.length > 2) {
-              String keyword3rt = sqlSplit[2].toUpperCase();
-              switch (keyword3rt) {
-                  case "COLUMNS":
-                    throw new IllegalArgumentException(
-                        String.format("SHOW FULL %s not permit", keyword3rt));
-              }
-            } else
-              throw new IllegalArgumentException("SHOW FULL syntax error");
+        case "CREATE":
+        case "COLUMNS":
+        case "TABLE":
+          throw new IllegalArgumentException(String.format("SHOW %s not permit", keyword2nd));
+        case "FULL":
+          if (sqlSplit.length > 2) {
+            String keyword3rt = sqlSplit[2].toUpperCase();
+            switch (keyword3rt) {
+              case "COLUMNS":
+                throw new IllegalArgumentException(
+                    String.format("SHOW FULL %s not permit", keyword3rt));
+            }
+          } else
+            throw new IllegalArgumentException("SHOW FULL syntax error");
       }
       if ("CREATE".equals(keyword2nd))
         throw new IllegalArgumentException("SHOW CREATE not permit");
@@ -387,8 +387,8 @@ public class BkdataUtils {
    * @param note_id
    * @param userName
    * @return {
-   *   message : scala code
-   *   result : 是否需要替换输入
+   * message : scala code
+   * result : 是否需要替换输入
    * }
    * @throws Exception
    */
@@ -468,13 +468,12 @@ public class BkdataUtils {
   }
 
   /**
-   *
    * @param sql
    * @param note_id
    * @param userName
    * @return {
-   *   message: sql
-   *   result : 是否需要替换输出
+   * message: sql
+   * result : 是否需要替换输出
    * }
    * @throws IOException
    * @throws IllegalAccessException
