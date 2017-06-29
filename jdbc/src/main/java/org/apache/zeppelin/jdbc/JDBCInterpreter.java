@@ -29,13 +29,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -575,6 +569,7 @@ public class JDBCInterpreter extends Interpreter {
       }
 
       ArrayList<String> multipleSqlArray = splitSqlQueries(sql);
+      List<String> relatedRT = new LinkedList<>();
       for (int i = 0; i < multipleSqlArray.size(); i++) {
         String sqlToExecute = multipleSqlArray.get(i);
 
@@ -586,8 +581,8 @@ public class JDBCInterpreter extends Interpreter {
           BkdataUtils.checkSql(sqlToExecute);
           BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sqlToExecute,
               interpreterContext.getNoteId(),
-              interpreterContext.getParagraphId(),
-              interpreterContext.getAuthenticationInfo().getUser());
+              interpreterContext.getAuthenticationInfo().getUser(),
+              relatedRT);
           sqlToExecute = rtn.getMessage();
           logger.info("real sql to execute : {}", sqlToExecute);
           isReplaceOutput = rtn.isResult();
@@ -639,6 +634,10 @@ public class JDBCInterpreter extends Interpreter {
           }
         }
       }
+      BkdataUtils.callbackNoteRT(relatedRT,
+          interpreterContext.getNoteId(),
+          interpreterContext.getParagraphId(),
+          interpreterContext.getAuthenticationInfo().getUser());
       //In case user ran an insert/update/upsert statement
       if (connection != null) {
         try {

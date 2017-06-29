@@ -296,16 +296,17 @@ public class BkdataUtils {
     return rtn;
   }
 
-  public static DataApiRtn callbackNoteRT(String rt_id, String note_id, String paragraph_id,
+  public static DataApiRtn callbackNoteRT(List<String> rt_ids, String note_id, String paragraph_id,
                                           String operator) {
     DataApiRtn rtn = new DataApiRtn();
+    String result_table_ids = StringUtils.join(rt_ids, ",");
     String request = "{" +
         "\"app_code\":" + "\"data_analysis\"," +
         "\"app_secret\":" + "\"Ff?41^Cao^M-gGb*Nx-TQ?M!Ej~jo8kZ*GU@&IZcyVH?Ttu3SP\"," +
         "\"operator\":" + "\"" + operator + "\"," +
         "\"note_id\":" + "\"" + note_id + "\"," +
         "\"paragraph_id\":" + "\"" + paragraph_id + "\"," +
-        "\"result_table_id\":" + "\"" + rt_id + "\"" +
+        "\"result_table_ids\":" + "\"" + result_table_ids + "\"" +
         "}";
     try {
       PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com",
@@ -318,13 +319,14 @@ public class BkdataUtils {
       rtn.setResult(result);
       if (!result) {
         String msg = (String) resp.get("message");
-        logger.info("{} {} {} auth failed : {}", operator, note_id, rt_id, msg);
+        logger.info("{} {} {} auth failed : {}", operator, note_id, result_table_ids, msg);
         rtn.setMessage(msg);
       }
       return rtn;
     } catch (IOException ie) {
-      rtn.setMessage(ie.getMessage());
-      logger.info("{} {} {} auth failed : {}", operator, note_id, rt_id, ie.getMessage());
+      String msg = ie.getMessage();
+      rtn.setMessage(msg);
+      logger.info("{} {} {} auth failed : {}", operator, note_id, result_table_ids, msg);
     }
     return rtn;
   }
@@ -390,8 +392,8 @@ public class BkdataUtils {
    * }
    * @throws Exception
    */
-  public static DataApiRtn sparkCoreWordReplace(String line, String note_id, String paragraph_id,
-                                                String userName)
+  public static DataApiRtn sparkCoreWordReplace(String line, String note_id,
+                                                String userName, final List<String> relatedRT)
       throws IllegalAccessException, ParseException, IllegalArgumentException {
     DataApiRtn rtn = new DataApiRtn();
     rtn.setMessage(line);
@@ -420,7 +422,7 @@ public class BkdataUtils {
           logger.info("~~ new cmd - {}", newCmd);
           rtn.setMessage(newCmd);
           rtn.setResult(true);
-          callbackNoteRT(rt_id, note_id, paragraph_id, userName);
+          relatedRT.add(rt_id);
           isError = false;
         }
       }
@@ -469,7 +471,6 @@ public class BkdataUtils {
    *
    * @param sql
    * @param note_id
-   * @param paragrapth_id
    * @param userName
    * @return {
    *   message: sql
@@ -478,8 +479,8 @@ public class BkdataUtils {
    * @throws IOException
    * @throws IllegalAccessException
    */
-  public static DataApiRtn jdbcCoreWorkReplace(String sql, String note_id, String paragrapth_id,
-                                               String userName)
+  public static DataApiRtn jdbcCoreWorkReplace(String sql, String note_id,
+                                               String userName, final List<String> relatedRT)
       throws IOException, IllegalAccessException {
     sql = sql.trim();
     logger.info("sqlToExecute : {}", sql);
@@ -494,6 +495,7 @@ public class BkdataUtils {
           String errMsg = userName + " access " + tableName + " in note(" + note_id + ") failed";
           throw new IllegalAccessException(errMsg);
         }
+        relatedRT.add(tableName);
         sql = sql.replace(tableName, resultTableConvert(tableName));
       }
       rtn.setMessage(sql);
@@ -517,7 +519,7 @@ public class BkdataUtils {
         String errMsg = userName + " access " + rt_id + " in note(" + note_id + ") failed";
         throw new IllegalAccessException(errMsg);
       }
-      callbackNoteRT(rt_id, note_id, paragrapth_id, userName);
+      relatedRT.add(rt_id);
       rtn.setMessage(StringUtils.join(descSplit, " "));
     } else if (uppderSQL.startsWith("SHOW")) {
       //pass show tables

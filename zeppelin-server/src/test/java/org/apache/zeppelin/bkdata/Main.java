@@ -7,9 +7,8 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.zeppelin.util.BkdataUtils;
 import org.apache.zeppelin.util.HTTPUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Array;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +36,18 @@ public class Main {
 //    if (m.find()){
 //      System.out.println(m.group());
 //    }
-    String tmp = "\nshow tables; ";
-    System.out.println("1"+tmp.trim()+"1");
+//    String tmp = "\nshow tables; ";
+//    System.out.println("1"+tmp.trim()+"1");
+    List<String> list = new LinkedList<String>(){
+      {
+        add("aaa");
+      }
+    };
+    test(list);
+    System.out.println(Arrays.toString(list.toArray()));
+  }
+
+  private static void test( List<String> abc){
+    abc.add("ccc");
   }
 }

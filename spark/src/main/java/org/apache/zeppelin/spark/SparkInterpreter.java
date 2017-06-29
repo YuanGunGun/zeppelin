@@ -1163,9 +1163,14 @@ public class SparkInterpreter extends Interpreter {
   }
 
   private String[] bkdataPredo(String[] lines, InterpreterContext context) throws Exception {
+    List<String> relatedRT = new LinkedList<>();
     for (int idx = 0; idx < lines.length; idx++) {
       String line = lines[idx];
       BkdataUtils.DataApiRtn rtn = BkdataUtils.sparkCoreWordReplace(line,
+          context.getNoteId(),
+          context.getAuthenticationInfo().getUser(),
+          relatedRT);
+      BkdataUtils.callbackNoteRT(relatedRT,
           context.getNoteId(),
           context.getParagraphId(),
           context.getAuthenticationInfo().getUser());

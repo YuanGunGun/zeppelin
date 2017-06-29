@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.spark;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.apache.zeppelin.interpreter.WrappedInterpreter;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
+import org.apache.zeppelin.util.BkdataUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,8 +88,26 @@ public class SparkSqlInterpreter extends Interpreter {
   @Override
   public void close() {}
 
+  private BkdataUtils.DataApiRtn bkdataPredo(String sql, InterpreterContext context)
+      throws IOException {
+    return BkdataUtils.callbackNoteRT(BkdataUtils.parseSQLTablename(sql),
+        context.getNoteId(),
+        context.getParagraphId(),
+        context.getAuthenticationInfo().getUser());
+  }
+
   @Override
   public InterpreterResult interpret(String st, InterpreterContext context) {
+    try {
+      BkdataUtils.DataApiRtn apiRtn = bkdataPredo(st, context);
+      if (!apiRtn.isResult()) {
+        logger.error("error in bkdata predo {}",apiRtn.getMessage());
+        return new InterpreterResult(Code.ERROR, apiRtn.getMessage());
+      }
+    } catch (IOException e) {
+      logger.error("Parse Table error - {}", e.getMessage());
+      return new InterpreterResult(Code.ERROR, "SQL not Allowed.");
+    }
     SQLContext sqlc = null;
     SparkInterpreter sparkInterpreter = getSparkInterpreter();
 
