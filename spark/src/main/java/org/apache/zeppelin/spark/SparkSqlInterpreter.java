@@ -101,7 +101,7 @@ public class SparkSqlInterpreter extends Interpreter {
     try {
       BkdataUtils.DataApiRtn apiRtn = bkdataPredo(st, context);
       if (!apiRtn.isResult()) {
-        logger.error("error in bkdata predo {}",apiRtn.getMessage());
+        logger.error("error in bkdata predo {}", apiRtn.getMessage());
         return new InterpreterResult(Code.ERROR, apiRtn.getMessage());
       }
     } catch (IOException e) {
