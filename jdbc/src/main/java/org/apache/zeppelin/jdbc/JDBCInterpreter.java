@@ -578,9 +578,10 @@ public class JDBCInterpreter extends Interpreter {
          * 只对tspider_做特殊处理。
          */
         boolean isReplaceOutput = false;
+        if (!"norbertchen".equals(interpreterContext.getAuthenticationInfo().getUser()))
+          BkdataUtils.forbiddenKeyword(sqlToExecute);
         if (interpreterContext.getReplName().startsWith("tspider_")) {
           try {
-            BkdataUtils.checkSql(sqlToExecute);
             BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sqlToExecute,
                 interpreterContext.getNoteId(),
                 interpreterContext.getAuthenticationInfo().getUser(),
