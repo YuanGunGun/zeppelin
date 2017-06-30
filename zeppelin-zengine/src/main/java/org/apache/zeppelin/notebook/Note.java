@@ -109,6 +109,8 @@ public class Note implements Serializable, ParagraphJobListener {
       add("sql");
       add("spark.sql");
       add("md");
+      add("web_db");
+      add("offline_db");
 //        add("spark.pyspark");
     }
   };
