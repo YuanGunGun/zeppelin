@@ -575,20 +575,23 @@ public class JDBCInterpreter extends Interpreter {
 
         /**
          * ctongfu@gmail.com
+         * 只对tspider_做特殊处理。
          */
-        boolean isReplaceOutput;
-        try {
-          BkdataUtils.checkSql(sqlToExecute);
-          BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sqlToExecute,
-              interpreterContext.getNoteId(),
-              interpreterContext.getAuthenticationInfo().getUser(),
-              relatedRT);
-          sqlToExecute = rtn.getMessage();
-          logger.info("real sql to execute : {}", sqlToExecute);
-          isReplaceOutput = rtn.isResult();
-        } catch (Exception e) {
-          logger.error("JDBC Interpreter bkdata predo - ", e);
-          return new InterpreterResult(Code.ERROR, e.getMessage());
+        boolean isReplaceOutput = false;
+        if (interpreterContext.getReplName().startsWith("tspider_")) {
+          try {
+            BkdataUtils.checkSql(sqlToExecute);
+            BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sqlToExecute,
+                interpreterContext.getNoteId(),
+                interpreterContext.getAuthenticationInfo().getUser(),
+                relatedRT);
+            sqlToExecute = rtn.getMessage();
+            logger.info("real sql to execute : {}", sqlToExecute);
+            isReplaceOutput = rtn.isResult();
+          } catch (Exception e) {
+            logger.error("JDBC Interpreter bkdata predo - ", e);
+            return new InterpreterResult(Code.ERROR, e.getMessage());
+          }
         }
 
         statement = connection.createStatement();
