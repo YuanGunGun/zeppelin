@@ -1221,7 +1221,7 @@ public class SparkInterpreter extends Interpreter {
         logger.info("Interpreter exception", e);
         InterpreterResult intpResult = new InterpreterResult(Code.ERROR);
         if (e instanceof FileNotFoundException){
-          intpResult.add("对应时间范围内没有数据");
+          intpResult.add("No data within the specified time range");
         } else {
           intpResult.add(InterpreterUtils.getMostRelevantMessage(e));
         }
@@ -1231,7 +1231,7 @@ public class SparkInterpreter extends Interpreter {
         out.setInterpreterOutput(null);
         logger.info("Interpreter error", e);
         InterpreterResult intpResult = new InterpreterResult(Code.ERROR);
-        intpResult.add("结果表在对应时间范围内没有数据");
+        intpResult.add("No data within the specified time range");
         return intpResult;
       }
 
