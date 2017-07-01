@@ -111,11 +111,15 @@ public class BkdataUtils {
     }
   }
 
-  public static void checkSql(String sql) throws IllegalArgumentException {
+  public static void forbiddenKeyword(String sql) throws IllegalArgumentException {
     for (String keyWord : notAllowdSQLPrefix) {
       if (sql.toUpperCase().startsWith(keyWord))
         throw new IllegalArgumentException(keyWord + " not permit");
     }
+  }
+
+  public static void checkSql(String sql) throws IllegalArgumentException {
+    forbiddenKeyword(sql);
     //对SHOW做单独处理
     if (sql.toUpperCase().startsWith("SHOW")) {
       String[] sqlSplit = sql.split("\\s+");
