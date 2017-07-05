@@ -17,19 +17,41 @@ import java.util.regex.Pattern;
  */
 public class Main {
   public static void main(String[] args) throws Exception{
-//    Gson gson = new Gson();
-//    String sql = "select * from table1 left join table2 on t1.id = t2.id";
-//    System.out.println(new String(Base64.encodeBase64(sql.getBytes())));
-//    List<String> rtn = new ArrayList<>();
-//    String jdbcRealmUrl = "http://api.leaf.ied.com";
-//    String jdbcRealmPath = "/offline/sql/find_table_name?sql=%s";
-//    GetMethod getZeppelinUser = HTTPUtils.httpGet(jdbcRealmUrl,
-//        String.format(jdbcRealmPath, new String(Base64.encodeBase64(sql.getBytes()))));
-//    Map<String, Object> resp = gson.fromJson(getZeppelinUser.getResponseBodyAsString(),
-//        new TypeToken<Map<String, Object>>() {
-//        }.getType());
-//    List<String> tables = (List<String>)resp.get("data");
-//    System.out.println(tables);
+    Gson gson = new Gson();
+    String sql = "(select type as user_type,\n" +
+        "       1 as pkg_type,\n" +
+        "       sum(if(pkg_1==1,1,0)) as pkg_num,\n" +
+        "\t   count(*) as total_num,\n" +
+        "       round((sum(if(pkg_1==1,1,0))/count(*)),2) as pkg_rate\n" +
+        "from ubm_cv_dl_tgp_newpkg_3\n" +
+        "group by type)\n" +
+        "union\n" +
+        "(select type as user_type,\n" +
+        "       2 as pkg_type,\n" +
+        "       sum(if(pkg_2==1,1,0)) as pkg_num,\n" +
+        "\t   count(*) as total_num,\n" +
+        "       round((sum(if(pkg_2==1,1,0))/count(*)),2) as pkg_rate\n" +
+        "from ubm_cv_dl_tgp_newpkg_3\n" +
+        "group by type)\n" +
+        "union\n" +
+        "(select type as user_type,\n" +
+        "       3 as pkg_type,\n" +
+        "       sum(if(pkg_3==1,1,0)) as pkg_num,\n" +
+        "\t   count(*) as total_num,\n" +
+        "       round((sum(if(pkg_3==1,1,0))/count(*)),2) as pkg_rate\n" +
+        "from ubm_cv_dl_tgp_newpkg_3\n" +
+        "group by type)\n";
+    System.out.println(new String(Base64.encodeBase64(sql.getBytes())));
+    List<String> rtn = new ArrayList<>();
+    String jdbcRealmUrl = "http://api.leaf.ied.com";
+    String jdbcRealmPath = "/offline/sql/find_table_name?sql=%s";
+    GetMethod getZeppelinUser = HTTPUtils.httpGet(jdbcRealmUrl,
+        String.format(jdbcRealmPath, new String(Base64.encodeBase64(sql.getBytes()))));
+    Map<String, Object> resp = gson.fromJson(getZeppelinUser.getResponseBodyAsString(),
+        new TypeToken<Map<String, Object>>() {
+        }.getType());
+    List<String> tables = (List<String>)resp.get("data");
+    System.out.println(tables);
 //    String test = "a1f2f105_abc_123";
 //    Pattern r = Pattern.compile("^\\s*[a-z]+[a-z0-9A-Z_]+_\\d+\\s*$");
 //    Matcher m = r.matcher(test);
@@ -38,13 +60,6 @@ public class Main {
 //    }
 //    String tmp = "\nshow tables; ";
 //    System.out.println("1"+tmp.trim()+"1");
-    List<String> list = new LinkedList<String>(){
-      {
-        add("aaa");
-      }
-    };
-    test(list);
-    System.out.println(Arrays.toString(list.toArray()));
   }
 
   private static void test( List<String> abc){
