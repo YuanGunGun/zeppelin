@@ -38,8 +38,6 @@ import java.util.regex.Pattern;
  */
 public class BkdataUtils {
   public static Logger logger = LoggerFactory.getLogger(BkdataUtils.class);
-  private static Pattern r = Pattern.compile("sqlc\\.read\\.(parquet|json)\\(.*$");
-  private static Pattern rn = Pattern.compile("\\(.*\\)");
   private static Gson gson = new Gson();
   private static String[] notAllowdSQLPrefix = new String[]{
     "CREATE",
@@ -383,6 +381,7 @@ public class BkdataUtils {
     return StringUtils.join(paths, ",");
   }
 
+
   /**
    * 1、敏感路径替换
    * 2、权限控制
@@ -399,6 +398,63 @@ public class BkdataUtils {
   public static DataApiRtn sparkCoreWordReplace(String line, String note_id,
                                                 String userName, final List<String> relatedRT)
       throws IllegalAccessException, ParseException, IllegalArgumentException {
+    Pattern r = Pattern.compile("sqlc\\.read\\.(parquet|json)\\(.*$");
+    Pattern rn = Pattern.compile("\\(.*\\)");
+    DataApiRtn rtn = new DataApiRtn();
+    rtn.setMessage(line);
+    Matcher m = r.matcher(line);
+    if (m.find()) {
+      boolean isError = true;
+      Matcher mn = rn.matcher(m.group());
+      if (mn.find()) {
+        String s = mn.group();
+        String toSpilit = s.replace("\"", "").replace("(", "").replace(")", "");
+        String[] readArgs = toSpilit.split(",");
+        logger.info("~~ Spark interpreter {}", Arrays.toString(readArgs));
+        if (readArgs.length == 3) {
+          String rt_id = readArgs[0];
+          DataApiRtn cap = checkAccessPrivilege(rt_id, note_id, userName);
+          if (!cap.isResult()) {
+            String errMsg = userName + " access " + rt_id + " in note(" + note_id + ") failed";
+            throw new IllegalAccessException(errMsg);
+          }
+          String start_time = readArgs[1];
+          String end_time = readArgs[2];
+          String newReadArg = sparkReadArgs2HdfsPath(rt_id, start_time, end_time);
+          String left = line.substring(0, line.indexOf("("));
+          String right = line.substring(line.indexOf(")"));
+          String newCmd = left + "(\"" + newReadArg + "\"" + right;
+          logger.info("~~ new cmd - {}", newCmd);
+          rtn.setMessage(newCmd);
+          rtn.setResult(true);
+          relatedRT.add(rt_id);
+          isError = false;
+        }
+      }
+      if (isError)
+        throw new IllegalArgumentException("spark argument wrong");
+    }
+    return rtn;
+  }
+
+  /**
+   * 1、敏感路径替换
+   * 2、权限控制
+   *
+   * @param line
+   * @param note_id
+   * @param userName
+   * @return {
+   *   message : scala code
+   *   result : 是否需要替换输入
+   * }
+   * @throws Exception
+   */
+  public static DataApiRtn pySparkCoreWordReplace(String line, String note_id,
+                                                String userName, final List<String> relatedRT)
+      throws IllegalAccessException, ParseException, IllegalArgumentException {
+    Pattern r = Pattern.compile("sc\\.textFile\\(.*$");
+    Pattern rn = Pattern.compile("\\(.*\\)");
     DataApiRtn rtn = new DataApiRtn();
     rtn.setMessage(line);
     Matcher m = r.matcher(line);

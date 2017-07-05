@@ -42,6 +42,7 @@ import org.apache.commons.exec.ExecuteResultHandler;
 import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.exec.environment.EnvironmentUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SQLContext;
@@ -51,6 +52,7 @@ import org.apache.zeppelin.interpreter.InterpreterResult.Code;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.interpreter.util.InterpreterOutputStream;
 import org.apache.zeppelin.spark.dep.SparkDependencyContext;
+import org.apache.zeppelin.util.BkdataUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -324,8 +326,35 @@ public class PySparkInterpreter extends Interpreter implements ExecuteResultHand
     outputStream.getInterpreterOutput().write(message);
   }
 
+
+  private String bkdataPredo(String text, InterpreterContext context) throws Exception {
+    String[] lines = text.split("\n");
+    List<String> relatedRT = new LinkedList<>();
+    for (int idx = 0; idx < lines.length; idx++) {
+      String line = lines[idx];
+      BkdataUtils.DataApiRtn rtn = BkdataUtils.pySparkCoreWordReplace(line,
+          context.getNoteId(),
+          context.getAuthenticationInfo().getUser(),
+          relatedRT);
+      BkdataUtils.callbackNoteRT(relatedRT,
+          context.getNoteId(),
+          context.getParagraphId(),
+          context.getAuthenticationInfo().getUser());
+      if (rtn.isResult())
+        lines[idx] = rtn.getMessage();
+    }
+    return StringUtils.join(lines, "\n");
+  }
+
+
   @Override
   public InterpreterResult interpret(String st, InterpreterContext context) {
+    try {
+      st = bkdataPredo(st, context);
+    } catch (Exception e) {
+      logger.error("PySpark Interpreter bkdata predo - ", e);
+      return new InterpreterResult(Code.ERROR, e.getMessage());
+    }
     SparkInterpreter sparkInterpreter = getSparkInterpreter();
     sparkInterpreter.populateSparkWebUrl(context);
     if (sparkInterpreter.getSparkVersion().isUnsupportedVersion()) {
