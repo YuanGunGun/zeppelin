@@ -145,6 +145,7 @@ public class NotebookRestApi {
   }
 
   /**
+   * ctongfu@gmail.com
    * Check if the current user own the given note.
    */
   private void checkIfUserIsOwner(String noteId, String bk_ticket, String errorMsg)
@@ -250,6 +251,71 @@ public class NotebookRestApi {
     notebookServer.broadcastNoteList(subject, userAndRoles);
     return new JsonResponse<>(Status.OK).build();
   }
+
+
+  /**
+   * ctongfu@gmail.com
+   * set note authorization information
+   */
+  @PUT
+  @Path("{noteId}/permissions/set")
+  @ZeppelinApi
+  public Response setNotePermissions(@PathParam("noteId") String noteId, String req)
+      throws IOException {
+
+    HashMap<String, Object> permMap =
+        gson.fromJson(req, new TypeToken<HashMap<String, HashSet<String>>>() {
+        }.getType());
+    String bk_ticket = (String) permMap.get("bk_ticket");
+    String principal = SecurityUtils.getPrincipal();
+
+
+
+    HashSet<String> userAndRoles = new HashSet<>();
+    BkdataUtils.BKAuth bkAuth = BkdataUtils.convertBKTicket2Auth(bk_ticket);
+    userAndRoles.add(bkAuth.getUserName());
+    userAndRoles.add(principal);
+    userAndRoles.addAll(SecurityUtils.getRoles());
+
+    checkIfUserIsAnon(getBlockNotAuthenticatedUserErrorMsg());
+    checkIfUserIsOwner(noteId,
+        ownerPermissionError(userAndRoles, notebookAuthorization.getOwners(noteId)));
+
+    Note note = notebook.getNote(noteId);
+    LOG.info("Set permissions {} {} {} {} {} {}", noteId, principal, bkAuth.getUserName(),
+        permMap.get("owners"), permMap.get("readers"), permMap.get("writers"));
+
+    HashSet<String> readers = (HashSet<String>) permMap.get("readers");
+    HashSet<String> owners = (HashSet<String>) permMap.get("owners");
+    HashSet<String> writers = (HashSet<String>) permMap.get("writers");
+    // Set readers, if writers and owners is empty -> set to user requesting the change
+    if (readers != null && !readers.isEmpty()) {
+      if (writers.isEmpty()) {
+        writers = Sets.newHashSet(SecurityUtils.getPrincipal());
+      }
+      if (owners.isEmpty()) {
+        owners = Sets.newHashSet(SecurityUtils.getPrincipal());
+      }
+    }
+    // Set writers, if owners is empty -> set to user requesting the change
+    if (writers != null && !writers.isEmpty()) {
+      if (owners.isEmpty()) {
+        owners = Sets.newHashSet(SecurityUtils.getPrincipal());
+      }
+    }
+
+    notebookAuthorization.setReaders(noteId, readers);
+    notebookAuthorization.setWriters(noteId, writers);
+    notebookAuthorization.setOwners(noteId, owners);
+    LOG.debug("After set permissions {} {} {}", notebookAuthorization.getOwners(noteId),
+        notebookAuthorization.getReaders(noteId), notebookAuthorization.getWriters(noteId));
+    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
+    note.persist(subject);
+    notebookServer.broadcastNote(note);
+    notebookServer.broadcastNoteList(subject, userAndRoles);
+    return new JsonResponse<>(Status.OK).build();
+  }
+
 
   /**
    * bind a setting to note
@@ -403,6 +469,7 @@ public class NotebookRestApi {
 
 
   /**
+   * ctongfu@gmail.com
    * Post delete note REST API
    *
    * @param message ID of Note Json
