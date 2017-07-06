@@ -258,7 +258,7 @@ public class NotebookRestApi {
    * post set note authorization information
    */
   @POST
-  @Path("{noteId}/permissions")
+  @Path("note/permissions")
   @ZeppelinApi
   public Response postSetNotePermissions(String message)
       throws IOException {
