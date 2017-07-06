@@ -264,7 +264,7 @@ public class NotebookRestApi {
       throws IOException {
 
     HashMap<String, Object> permMap =
-        gson.fromJson(req, new TypeToken<HashMap<String, HashSet<String>>>() {
+        gson.fromJson(req, new TypeToken<HashMap<String, Object>>() {
         }.getType());
     String bk_ticket = (String) permMap.get("bk_ticket");
     String principal = SecurityUtils.getPrincipal();
