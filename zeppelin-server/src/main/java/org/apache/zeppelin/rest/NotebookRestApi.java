@@ -255,20 +255,18 @@ public class NotebookRestApi {
 
   /**
    * ctongfu@gmail.com
-   * set note authorization information
+   * post set note authorization information
    */
-  @PUT
-  @Path("{noteId}/permissions/set")
+  @POST
+  @Path("{noteId}/permissions")
   @ZeppelinApi
-  public Response setNotePermissions(@PathParam("noteId") String noteId, String req)
+  public Response postSetNotePermissions(String message)
       throws IOException {
-
-    HashMap<String, Object> permMap =
-        gson.fromJson(req, new TypeToken<HashMap<String, Object>>() {
-        }.getType());
-    String bk_ticket = (String) permMap.get("bk_ticket");
+    LOG.info("Post set note permissions by json {} ", message);
+    SetNotePermissionsRequest req = gson.fromJson(message, SetNotePermissionsRequest.class);
+    String bk_ticket = req.getTicket();
     String principal = SecurityUtils.getPrincipal();
-
+    String noteId = req.getNoteId();
 
 
     HashSet<String> userAndRoles = new HashSet<>();
@@ -282,12 +280,13 @@ public class NotebookRestApi {
         ownerPermissionError(userAndRoles, notebookAuthorization.getOwners(noteId)));
 
     Note note = notebook.getNote(noteId);
+    HashSet<String> readers = req.getReaders();
+    HashSet<String> owners = req.getOwners();
+    HashSet<String> writers = req.getWriters();
     LOG.info("Set permissions {} {} {} {} {} {}", noteId, principal, bkAuth.getUserName(),
-        permMap.get("owners"), permMap.get("readers"), permMap.get("writers"));
+        owners, readers, writers);
 
-    HashSet<String> readers = (HashSet<String>) permMap.get("readers");
-    HashSet<String> owners = (HashSet<String>) permMap.get("owners");
-    HashSet<String> writers = (HashSet<String>) permMap.get("writers");
+
     // Set readers, if writers and owners is empty -> set to user requesting the change
     if (readers != null && !readers.isEmpty()) {
       if (writers.isEmpty()) {
