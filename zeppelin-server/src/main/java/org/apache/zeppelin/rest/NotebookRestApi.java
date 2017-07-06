@@ -276,7 +276,7 @@ public class NotebookRestApi {
     userAndRoles.addAll(SecurityUtils.getRoles());
 
     checkIfUserIsAnon(getBlockNotAuthenticatedUserErrorMsg());
-    checkIfUserIsOwner(noteId,
+    checkIfUserIsOwner(noteId, bk_ticket,
         ownerPermissionError(userAndRoles, notebookAuthorization.getOwners(noteId)));
 
     Note note = notebook.getNote(noteId);
