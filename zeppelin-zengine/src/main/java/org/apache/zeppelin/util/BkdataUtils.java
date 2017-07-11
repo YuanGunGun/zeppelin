@@ -266,8 +266,8 @@ public class BkdataUtils {
   public static DataApiRtn checkAccessPrivilege(String rt_id, String note_id, String operator) {
     DataApiRtn rtn = new DataApiRtn();
     String request = "{" +
-        "\"app_code\":" + "\""+BKConf.APP_CODE+"\"," +
-        "\"app_secret\":" + "\"" + BKConf.APP_SECRET+"\"," +
+        "\"app_code\":" + "\"" + BKConf.APP_CODE + "\"," +
+        "\"app_secret\":" + "\"" + BKConf.APP_SECRET + "\"," +
         "\"operator\":" + "\"" + operator + "\"," +
         "\"note_id\":" + "\"" + note_id + "\"," +
         "\"result_table_id\":" + "\"" + rt_id + "\"" +
@@ -299,8 +299,8 @@ public class BkdataUtils {
     DataApiRtn rtn = new DataApiRtn();
     String result_table_ids = StringUtils.join(rt_ids, ",");
     String request = "{" +
-        "\"app_code\":" + "\""+BKConf.APP_CODE+"\"," +
-        "\"app_secret\":" + "\""+ BKConf.APP_SECRET +"\"," +
+        "\"app_code\":" + "\"" + BKConf.APP_CODE + "\"," +
+        "\"app_secret\":" + "\"" + BKConf.APP_SECRET + "\"," +
         "\"operator\":" + "\"" + operator + "\"," +
         "\"note_id\":" + "\"" + note_id + "\"," +
         "\"paragraph_id\":" + "\"" + paragraph_id + "\"," +
