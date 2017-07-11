@@ -560,7 +560,6 @@ public class JDBCInterpreter extends Interpreter {
    */
   private InterpreterResult executeSqlByQuery(String propertyKey, String sql,
                                        InterpreterContext interpreterContext) {
-    String paragraphId = interpreterContext.getParagraphId();
     String user = interpreterContext.getAuthenticationInfo().getUser();
 
     InterpreterResult interpreterResult = new InterpreterResult(InterpreterResult.Code.SUCCESS);
@@ -582,8 +581,7 @@ public class JDBCInterpreter extends Interpreter {
         logger.error("JDBC Interpreter bkdata predo - ", e);
         return new InterpreterResult(Code.ERROR, e.getMessage());
       }
-
-
+      BkdataUtils.callQueryApi(sqlToExec, "tspider", user, interpreterResult);
     }
 
     return interpreterResult;
