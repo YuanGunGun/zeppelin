@@ -633,8 +633,8 @@ public class BkdataUtils {
        * 拼接query返回
        */
       StringBuilder msg = new StringBuilder(TABLE_MAGIC_TAG);
-      List<String> fields_order = (List<String>)resp.get("select_fields_order");
-      for (int i=0; i< fields_order.size(); i++){
+      List<String> fields_order = (List<String>) resp.get("select_fields_order");
+      for (int i = 0; i < fields_order.size(); i++) {
         if (i > 1) {
           msg.append(TAB);
         }
@@ -645,9 +645,9 @@ public class BkdataUtils {
 
       List<Map<String, String>> queryData = (List<Map<String, String>>) resp.get("list");
       for (Map<String, String> row : queryData) {
-        for (int i=0; i< fields_order.size(); i++){
+        for (int i = 0; i < fields_order.size(); i++) {
           msg.append(replaceReservedChars(row.get(fields_order.get(i))));
-          if (i != fields_order.size()-1)
+          if (i != fields_order.size() - 1)
             msg.append(TAB);
         }
         msg.append(NEWLINE);
@@ -664,9 +664,6 @@ public class BkdataUtils {
         post.releaseConnection();
       }
     }
-
-
-
   }
 
 
