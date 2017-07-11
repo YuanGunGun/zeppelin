@@ -23,6 +23,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.lang.StringUtils;
+import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,16 +40,11 @@ import java.util.regex.Pattern;
 public class BkdataUtils {
   public static Logger logger = LoggerFactory.getLogger(BkdataUtils.class);
   private static Gson gson = new Gson();
-  private static String[] notAllowdSQLPrefix = new String[]{
-    "CREATE",
-    "ALTER",
-    "DROP",
-    "DELETE",
-    "UPDATE",
-    "INSERT",
-    "RENAME",
-    "KILL"
-  };
+  private static final char WHITESPACE = ' ';
+  private static final char NEWLINE = '\n';
+  private static final char TAB = '\t';
+  private static final String TABLE_MAGIC_TAG = "%table ";
+  private static final String EMPTY_COLUMN_VALUE = "";
 
   /**
    * 内部返回封装
@@ -110,7 +106,7 @@ public class BkdataUtils {
   }
 
   public static void forbiddenKeyword(String sql) throws IllegalArgumentException {
-    for (String keyWord : notAllowdSQLPrefix) {
+    for (String keyWord : BKConf.notAllowdSQLPrefix) {
       if (sql.toUpperCase().startsWith(keyWord))
         throw new IllegalArgumentException(keyWord + " not permit");
     }
@@ -270,8 +266,8 @@ public class BkdataUtils {
   public static DataApiRtn checkAccessPrivilege(String rt_id, String note_id, String operator) {
     DataApiRtn rtn = new DataApiRtn();
     String request = "{" +
-        "\"app_code\":" + "\"data_analysis\"," +
-        "\"app_secret\":" + "\"Ff?41^Cao^M-gGb*Nx-TQ?M!Ej~jo8kZ*GU@&IZcyVH?Ttu3SP\"," +
+        "\"app_code\":" + "\""+BKConf.APP_CODE+"\"," +
+        "\"app_secret\":" + "\"" + BKConf.APP_SECRET+"\"," +
         "\"operator\":" + "\"" + operator + "\"," +
         "\"note_id\":" + "\"" + note_id + "\"," +
         "\"result_table_id\":" + "\"" + rt_id + "\"" +
@@ -303,8 +299,8 @@ public class BkdataUtils {
     DataApiRtn rtn = new DataApiRtn();
     String result_table_ids = StringUtils.join(rt_ids, ",");
     String request = "{" +
-        "\"app_code\":" + "\"data_analysis\"," +
-        "\"app_secret\":" + "\"Ff?41^Cao^M-gGb*Nx-TQ?M!Ej~jo8kZ*GU@&IZcyVH?Ttu3SP\"," +
+        "\"app_code\":" + "\""+BKConf.APP_CODE+"\"," +
+        "\"app_secret\":" + "\""+ BKConf.APP_SECRET +"\"," +
         "\"operator\":" + "\"" + operator + "\"," +
         "\"note_id\":" + "\"" + note_id + "\"," +
         "\"paragraph_id\":" + "\"" + paragraph_id + "\"," +
@@ -594,6 +590,83 @@ public class BkdataUtils {
       }
     }
     return rtn;
+  }
+
+  private static String replaceReservedChars(String str) {
+    if (str == null) {
+      return EMPTY_COLUMN_VALUE;
+    }
+    String rtn = str.replace(TAB, WHITESPACE).replace(NEWLINE, WHITESPACE);
+    return rtn;
+  }
+
+  public static void callQueryApi(String sql, String prefer_storage, String userName,
+                                  InterpreterResult interpreterResult) {
+    String request = "{" +
+        "\"app_code\":" + "\"" + BKConf.APP_CODE + "\"," +
+        "\"app_secret\":" + "\"" + BKConf.APP_SECRET + "\"," +
+        "\"operator\":" + "\"" + userName + "\"," +
+        "\"sql\":" + "\"" + sql + "\"," +
+        "\"prefer_storage\":" + "\"" + prefer_storage + "\"" +
+        "}";
+    PostMethod post = null;
+    try {
+      post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com",
+          "/prod/get_data/", request);
+      Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(),
+          new TypeToken<Map<String, Object>>() {
+          }.getType());
+      boolean result = (Boolean) resp.get("result");
+      if (!result) {
+        String msg = (String) resp.get("message");
+        logger.info("查询失败 : {} {} {}", userName, msg, resp.get("code"));
+        interpreterResult.add(InterpreterResult.Type.TEXT, msg);
+        return;
+      }
+      Map<String, Object> data = (Map<String, Object>) resp.get("data");
+      interpreterResult.add(InterpreterResult.Type.TEXT,
+          String.format("Query executed successfully in %s sec. Affected rows : %s",
+              data.get("timetaken"),
+              data.get("totalRecords")));
+
+      /**
+       * 拼接query返回
+       */
+      StringBuilder msg = new StringBuilder(TABLE_MAGIC_TAG);
+      List<String> fields_order = (List<String>)resp.get("select_fields_order");
+      for (int i=0; i< fields_order.size(); i++){
+        if (i > 1) {
+          msg.append(TAB);
+        }
+        msg.append(replaceReservedChars(fields_order.get(i)));
+      }
+      msg.append(NEWLINE);
+
+
+      List<Map<String, String>> queryData = (List<Map<String, String>>) resp.get("list");
+      for (Map<String, String> row : queryData) {
+        for (int i=0; i< fields_order.size(); i++){
+          msg.append(replaceReservedChars(row.get(fields_order.get(i))));
+          if (i != fields_order.size()-1)
+            msg.append(TAB);
+        }
+        msg.append(NEWLINE);
+      }
+      interpreterResult.add(msg.toString());
+
+
+    } catch (IOException e) {
+      logger.info("调用API失败 : {}", e.getMessage());
+      interpreterResult.add(InterpreterResult.Type.TEXT, e.getMessage());
+      return;
+    } finally {
+      if (post != null) {
+        post.releaseConnection();
+      }
+    }
+
+
+
   }
 
 

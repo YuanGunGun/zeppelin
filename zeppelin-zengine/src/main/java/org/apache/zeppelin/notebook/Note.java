@@ -42,6 +42,8 @@ import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.Credentials;
+import org.apache.zeppelin.util.BKConf;
+import org.apache.zeppelin.util.BkdataUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,26 +97,9 @@ public class Note implements Serializable, ParagraphJobListener {
   private Map<String, Object> info = new HashMap<>();
 
   /**
-   * ctongfu@gmail.com
-   * 控制可用的repl范围
    * todo 可配置
    */
-  private List<String> allowedRepl = new ArrayList<String>() {
-    {
-      add("tspider_gem");
-      add("tspider_gemmobile");
-      add("tspider_ja");
-      add("tspider_ser");
-      add("spark");
-      add("sql");
-      add("spark.sql");
-      add("md");
-      add("web_db");
-      add("offline_db");
-      add("spark.pyspark");
-      add("pyspark");
-    }
-  };
+  private List<String> allowedRepl = BKConf.allowedRepl;
 
   public Note() {
   }

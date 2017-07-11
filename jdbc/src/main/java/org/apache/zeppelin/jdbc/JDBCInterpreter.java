@@ -550,6 +550,45 @@ public class JDBCInterpreter extends Interpreter {
   }
 
 
+  /**
+   * for tspider
+   *
+   * @param propertyKey
+   * @param sql
+   * @param interpreterContext
+   * @return
+   */
+  private InterpreterResult executeSqlByQuery(String propertyKey, String sql,
+                                       InterpreterContext interpreterContext) {
+    String paragraphId = interpreterContext.getParagraphId();
+    String user = interpreterContext.getAuthenticationInfo().getUser();
+
+    InterpreterResult interpreterResult = new InterpreterResult(InterpreterResult.Code.SUCCESS);
+    ArrayList<String> multipleSqlArray = splitSqlQueries(sql);
+    List<String> relatedRT = new LinkedList<>();
+
+    for (int i = 0; i < multipleSqlArray.size(); i++) {
+      String sqlToExec = multipleSqlArray.get(i);
+      if (!"norbertchen".equals(interpreterContext.getAuthenticationInfo().getUser()))
+        BkdataUtils.forbiddenKeyword(sqlToExec);
+      try {
+        BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sqlToExec,
+            interpreterContext.getNoteId(),
+            interpreterContext.getAuthenticationInfo().getUser(),
+            relatedRT);
+        sqlToExec = rtn.getMessage();
+        logger.info("real sql to execute : {}", sqlToExec);
+      } catch (Exception e) {
+        logger.error("JDBC Interpreter bkdata predo - ", e);
+        return new InterpreterResult(Code.ERROR, e.getMessage());
+      }
+
+
+    }
+
+    return interpreterResult;
+  }
+
   private InterpreterResult executeSql(String propertyKey, String sql,
       InterpreterContext interpreterContext) {
 
@@ -742,7 +781,10 @@ public class JDBCInterpreter extends Interpreter {
 
     cmd = cmd.trim();
     logger.debug("PropertyKey: {}, SQL command: '{}'", propertyKey, cmd);
-    return executeSql(propertyKey, cmd, contextInterpreter);
+    if("tspider".equals(contextInterpreter.getReplName()))
+      return executeSqlByQuery(propertyKey, cmd, contextInterpreter);
+    else
+      return executeSql(propertyKey, cmd, contextInterpreter);
   }
 
   @Override
