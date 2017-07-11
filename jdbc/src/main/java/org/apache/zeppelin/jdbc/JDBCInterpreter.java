@@ -779,7 +779,7 @@ public class JDBCInterpreter extends Interpreter {
 
     cmd = cmd.trim();
     logger.debug("PropertyKey: {}, SQL command: '{}'", propertyKey, cmd);
-    if("tspider".equals(contextInterpreter.getReplName()))
+    if ("tspider".equals(contextInterpreter.getReplName()))
       return executeSqlByQuery(propertyKey, cmd, contextInterpreter);
     else
       return executeSql(propertyKey, cmd, contextInterpreter);
