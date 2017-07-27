@@ -173,6 +173,21 @@ public class NotebookRestApi {
   }
   
   /**
+   * ctongfu@gmail.com
+   * Check if the current user can access (at least he have to be reader) the given note.
+   */
+  private void checkIfUserCanRead(String noteId, String userName, String errorMsg)
+      throws IOException {
+    Set<String> userAndRoles = Sets.newHashSet();
+    userAndRoles.add(userName);
+    userAndRoles.add(SecurityUtils.getPrincipal());
+    userAndRoles.addAll(SecurityUtils.getRoles());
+    if (!notebookAuthorization.hasReadAuthorization(userAndRoles, noteId)) {
+      throw new ForbiddenException(errorMsg);
+    }
+  }
+
+  /**
    * Check if the current user can access (at least he have to be reader) the given note.
    */
   private void checkIfUserCanRead(String noteId, String errorMsg) {
@@ -672,6 +687,39 @@ public class NotebookRestApi {
 
     AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
     note.removeParagraph(SecurityUtils.getPrincipal(), paragraphId);
+    note.persist(subject);
+    notebookServer.broadcastNote(note);
+
+    return new JsonResponse(Status.OK, "").build();
+  }
+
+  /**
+   * Post Delete paragraph REST API
+   * ctongfu@gmail.com
+   *
+   * @param message ID of Note Json
+   * @return JSON with status.OK
+   * @throws IOException
+   */
+  @POST
+  @Path("/paragraph/delete")
+  @ZeppelinApi
+  public Response postDeleteParagraph(String message) throws IOException {
+    DeleteParagraphRequest request = gson.fromJson(message, DeleteParagraphRequest.class);
+    String noteId = request.getNoteId();
+    String paragraphId = request.getParagraphId();
+    BkdataUtils.BKAuth bkAuth = BkdataUtils.convertBKTicket2Auth(request.getTicket());
+
+    Note note = notebook.getNote(noteId);
+    checkIfNoteIsNotNull(note);
+    checkIfUserCanRead(noteId,bkAuth.getUserName(),
+        "Insufficient privileges you cannot remove paragraph from this note");
+
+    Paragraph p = note.getParagraph(paragraphId);
+    checkIfParagraphIsNotNull(p);
+
+    AuthenticationInfo subject = new AuthenticationInfo(bkAuth.getUserName());
+    note.removeParagraph(bkAuth.getUserName(), paragraphId);
     note.persist(subject);
     notebookServer.broadcastNote(note);
 
