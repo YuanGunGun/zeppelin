@@ -1,0 +1,33 @@
+[
+  {
+    "group": "query",
+    "name": "query",
+    "className": "org.apache.zeppelin.query.QueryInterpreter",
+    "properties": {
+      "default.user": {
+        "envName": null,
+        "propertyName": "user",
+        "defaultValue": "root",
+        "description": "Query user name"
+      },
+      "default.password": {
+        "envName": null,
+        "propertyName": "password",
+        "defaultValue": "root",
+        "description": "Query password"
+      },
+      "default.database": {
+        "envName": null,
+        "propertyName": "database",
+        "defaultValue": "_internal",
+        "description": "Query database"
+      },
+      "default.url": {
+        "envName": null,
+        "propertyName": "url",
+        "defaultValue": "http://influx:8086",
+        "description": "Query url"
+      }
+    }
+  }
+]
