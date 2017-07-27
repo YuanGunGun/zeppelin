@@ -32,4 +32,5 @@ public class BKConf {
       add("pyspark");
     }
   };
+  public static int maxParagraphSize = 20;
 }

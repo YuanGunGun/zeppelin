@@ -491,7 +491,7 @@ public class Note implements Serializable, ParagraphJobListener {
 
   public boolean isLastParagraph(String paragraphId) {
     //ctontfu@gmail.com
-    if (paragraphs.size() >= 20) {
+    if (paragraphs.size() >= BKConf.maxParagraphSize) {
       return false;
     }
     if (!paragraphs.isEmpty()) {
