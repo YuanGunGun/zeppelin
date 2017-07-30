@@ -551,13 +551,14 @@ public class NotebookRestApi {
   public Response insertParagraph(@PathParam("noteId") String noteId, String message)
       throws IOException {
     LOG.info("insert paragraph {} {}", noteId, message);
-
     Note note = notebook.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot add paragraph to this note");
 
     NewParagraphRequest request = gson.fromJson(message, NewParagraphRequest.class);
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
+    BkdataUtils.BKAuth bkAuth = BkdataUtils.convertBKTicket2Auth(request.getTicket());
+    AuthenticationInfo subject = new AuthenticationInfo(bkAuth.getUserName());
+
     Paragraph p;
     Double indexDouble = request.getIndex();
     if (indexDouble == null) {

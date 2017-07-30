@@ -26,6 +26,7 @@ public class NewParagraphRequest {
   String title;
   String text;
   Double index;
+  String bk_ticket;
 
   public NewParagraphRequest() {
 
@@ -42,4 +43,6 @@ public class NewParagraphRequest {
   public Double getIndex() {
     return index;
   }
+
+  public String getTicket() { return bk_ticket; }
 }
