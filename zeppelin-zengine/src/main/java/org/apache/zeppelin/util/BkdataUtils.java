@@ -259,37 +259,33 @@ public class BkdataUtils {
    * 检查用户是否具有访问否个note中的某个rt的权限
    *
    * @param rt_id
-   * @param note_id
    * @param operator
    * @return
    */
-  public static DataApiRtn checkAccessPrivilege(String rt_id, String note_id, String operator) {
+  public static DataApiRtn checkAccessPrivilege(String rt_id, String operator) {
     DataApiRtn rtn = new DataApiRtn();
-    String request = "{" +
-        "\"app_code\":" + "\"" + BKConf.APP_CODE + "\"," +
-        "\"app_secret\":" + "\"" + BKConf.APP_SECRET + "\"," +
-        "\"operator\":" + "\"" + operator + "\"," +
-        "\"note_id\":" + "\"" + note_id + "\"," +
-        "\"result_table_id\":" + "\"" + rt_id + "\"" +
-        "}";
+    String pathFormat = "/prod/authapi/unified_auth/result_table/%s?" +
+        "app_code=%s" +
+        "&app_secret=%s" +
+        "&operator=%s";
+    String path = String.format(pathFormat, rt_id, BKConf.APP_CODE, BKConf.APP_SECRET, operator);
     try {
-      PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com",
-          "/prod/web/notebook/checkAuth/", request);
-      Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(),
+      logger.info(path);
+      GetMethod get = HTTPUtils.httpGet("http://bk-data.apigw.o.oa.com", path);
+      Map<String, Object> resp = gson.fromJson(get.getResponseBodyAsString(),
           new TypeToken<Map<String, Object>>() {
           }.getType());
-      post.releaseConnection();
       boolean result = (Boolean) resp.get("result");
-      rtn.setResult(result);
       if (!result) {
         String msg = (String) resp.get("message");
-        logger.info("{} {} {} auth failed : {}", operator, note_id, rt_id, msg);
+        logger.info("{} {} {} auth failed : {}", operator, rt_id, msg);
         rtn.setMessage(msg);
       }
+      rtn.setResult((Boolean) resp.get("data"));
       return rtn;
     } catch (IOException ie) {
       rtn.setMessage(ie.getMessage());
-      logger.info("{} {} {} auth failed : {}", operator, note_id, rt_id, ie.getMessage());
+      logger.info("{} {} {} auth failed : {}", operator, rt_id, ie.getMessage());
     }
     return rtn;
   }
@@ -409,7 +405,7 @@ public class BkdataUtils {
         logger.info("~~ Spark interpreter {}", Arrays.toString(readArgs));
         if (readArgs.length == 3) {
           String rt_id = readArgs[0];
-          DataApiRtn cap = checkAccessPrivilege(rt_id, note_id, userName);
+          DataApiRtn cap = checkAccessPrivilege(rt_id, userName);
           if (!cap.isResult()) {
             String errMsg = userName + " access " + rt_id + " in note(" + note_id + ") failed";
             throw new IllegalAccessException(errMsg);
@@ -464,7 +460,7 @@ public class BkdataUtils {
         logger.info("~~ Spark interpreter {}", Arrays.toString(readArgs));
         if (readArgs.length == 3) {
           String rt_id = readArgs[0];
-          DataApiRtn cap = checkAccessPrivilege(rt_id, note_id, userName);
+          DataApiRtn cap = checkAccessPrivilege(rt_id, userName);
           if (!cap.isResult()) {
             String errMsg = userName + " access " + rt_id + " in note(" + note_id + ") failed";
             throw new IllegalAccessException(errMsg);
@@ -546,7 +542,7 @@ public class BkdataUtils {
     String uppderSQL = sql.toUpperCase();
     if (uppderSQL.startsWith("SELECT")) {
       for (String tableName : parseSQLTablename(sql)) {
-        DataApiRtn cap = checkAccessPrivilege(tableName, note_id, userName);
+        DataApiRtn cap = checkAccessPrivilege(tableName, userName);
         if (!cap.isResult()) {
           String errMsg = userName + " access " + tableName + " in note(" + note_id + ") failed";
           throw new IllegalAccessException(errMsg);
@@ -570,7 +566,7 @@ public class BkdataUtils {
         throw new IllegalArgumentException("DESCRIBE syntax error");
       String rt_id = descSplit[1];
       descSplit[1] = resultTableConvert(rt_id);
-      DataApiRtn cap = checkAccessPrivilege(rt_id, note_id, userName);
+      DataApiRtn cap = checkAccessPrivilege(rt_id, userName);
       if (!cap.isResult()) {
         String errMsg = userName + " access " + rt_id + " in note(" + note_id + ") failed";
         throw new IllegalAccessException(errMsg);
