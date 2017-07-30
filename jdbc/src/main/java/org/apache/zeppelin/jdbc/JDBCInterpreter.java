@@ -454,7 +454,7 @@ public class JDBCInterpreter extends Interpreter {
     return null;
   }
 
-  private String getResults(ResultSet resultSet, boolean isTableType, boolean isBkdataReplace)
+  private String getResults(ResultSet resultSet, boolean isTableType)
       throws SQLException {
     ResultSetMetaData md = resultSet.getMetaData();
     StringBuilder msg;
@@ -483,7 +483,7 @@ public class JDBCInterpreter extends Interpreter {
         } else {
           resultValue = resultSet.getString(i);
         }
-        msg.append(replaceReservedChars(resultValue, isBkdataReplace));
+        msg.append(replaceReservedChars(resultValue));
         if (i != md.getColumnCount()) {
           msg.append(TAB);
         }
@@ -550,43 +550,6 @@ public class JDBCInterpreter extends Interpreter {
   }
 
 
-  /**
-   * for tspider
-   *
-   * @param propertyKey
-   * @param sql
-   * @param interpreterContext
-   * @return
-   */
-  private InterpreterResult executeSqlByQuery(String propertyKey, String sql,
-                                       InterpreterContext interpreterContext) {
-    String user = interpreterContext.getAuthenticationInfo().getUser();
-
-    InterpreterResult interpreterResult = new InterpreterResult(InterpreterResult.Code.SUCCESS);
-    ArrayList<String> multipleSqlArray = splitSqlQueries(sql);
-    List<String> relatedRT = new LinkedList<>();
-
-    for (int i = 0; i < multipleSqlArray.size(); i++) {
-      String sqlToExec = multipleSqlArray.get(i);
-      if (!"norbertchen".equals(interpreterContext.getAuthenticationInfo().getUser()))
-        BkdataUtils.forbiddenKeyword(sqlToExec);
-      try {
-        BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sqlToExec,
-            interpreterContext.getNoteId(),
-            interpreterContext.getAuthenticationInfo().getUser(),
-            relatedRT);
-        sqlToExec = rtn.getMessage();
-        logger.info("real sql to execute : {}", sqlToExec);
-      } catch (Exception e) {
-        logger.error("JDBC Interpreter bkdata predo - ", e);
-        return new InterpreterResult(Code.ERROR, e.getMessage());
-      }
-      BkdataUtils.callQueryApi(sqlToExec, "tspider", user, interpreterResult);
-    }
-
-    return interpreterResult;
-  }
-
   private InterpreterResult executeSql(String propertyKey, String sql,
       InterpreterContext interpreterContext) {
 
@@ -606,31 +569,31 @@ public class JDBCInterpreter extends Interpreter {
       }
 
       ArrayList<String> multipleSqlArray = splitSqlQueries(sql);
-      List<String> relatedRT = new LinkedList<>();
+//      List<String> relatedRT = new LinkedList<>();
       for (int i = 0; i < multipleSqlArray.size(); i++) {
         String sqlToExecute = multipleSqlArray.get(i);
 
-        /**
-         * ctongfu@gmail.com
-         * 只对tspider_做特殊处理。
-         */
-        boolean isReplaceOutput = false;
-        if (!"norbertchen".equals(interpreterContext.getAuthenticationInfo().getUser()))
-          BkdataUtils.forbiddenKeyword(sqlToExecute);
-        if (interpreterContext.getReplName().startsWith("tspider_")) {
-          try {
-            BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sqlToExecute,
-                interpreterContext.getNoteId(),
-                interpreterContext.getAuthenticationInfo().getUser(),
-                relatedRT);
-            sqlToExecute = rtn.getMessage();
-            logger.info("real sql to execute : {}", sqlToExecute);
-            isReplaceOutput = rtn.isResult();
-          } catch (Exception e) {
-            logger.error("JDBC Interpreter bkdata predo - ", e);
-            return new InterpreterResult(Code.ERROR, e.getMessage());
-          }
-        }
+//        /**
+//         * ctongfu@gmail.com
+//         * 只对tspider_做特殊处理。
+//         */
+//        boolean isReplaceOutput = false;
+//        if (!"norbertchen".equals(interpreterContext.getAuthenticationInfo().getUser()))
+//          BkdataUtils.forbiddenKeyword(sqlToExecute);
+//        if (interpreterContext.getReplName().startsWith("tspider_")) {
+//          try {
+//            BkdataUtils.DataApiRtn rtn = BkdataUtils.jdbcCoreWorkReplace(sqlToExecute,
+//                interpreterContext.getNoteId(),
+//                interpreterContext.getAuthenticationInfo().getUser(),
+//                relatedRT);
+//            sqlToExecute = rtn.getMessage();
+//            logger.info("real sql to execute : {}", sqlToExecute);
+//            isReplaceOutput = rtn.isResult();
+//          } catch (Exception e) {
+//            logger.error("JDBC Interpreter bkdata predo - ", e);
+//            return new InterpreterResult(Code.ERROR, e.getMessage());
+//          }
+//        }
 
         statement = connection.createStatement();
         if (statement == null) {
@@ -652,8 +615,7 @@ public class JDBCInterpreter extends Interpreter {
                   "Query executed successfully.");
             } else {
               interpreterResult.add(getResults(resultSet,
-                  !containsIgnoreCase(sqlToExecute, EXPLAIN_PREDICATE),
-                  isReplaceOutput));
+                  !containsIgnoreCase(sqlToExecute, EXPLAIN_PREDICATE)));
             }
           } else {
             // Response contains either an update count or there are no results.
@@ -675,10 +637,10 @@ public class JDBCInterpreter extends Interpreter {
           }
         }
       }
-      BkdataUtils.callbackNoteRT(relatedRT,
-          interpreterContext.getNoteId(),
-          interpreterContext.getParagraphId(),
-          interpreterContext.getAuthenticationInfo().getUser());
+//      BkdataUtils.callbackNoteRT(relatedRT,
+//          interpreterContext.getNoteId(),
+//          interpreterContext.getParagraphId(),
+//          interpreterContext.getAuthenticationInfo().getUser());
       //In case user ran an insert/update/upsert statement
       if (connection != null) {
         try {
@@ -697,10 +659,10 @@ public class JDBCInterpreter extends Interpreter {
       } else {
         logger.error("Cannot run " + sql, e);
         String errorMsg = Throwables.getStackTraceAsString(e);
-        /**ctongfu@gmail.com
-         * todo mysql 异常返回处理
-         */
-        errorMsg = errorMsg.replace("mapleleaf_", "").replace("batch_tspider_", "");
+//        /**ctongfu@gmail.com
+//         * todo mysql 异常返回处理
+//         */
+//        errorMsg = errorMsg.replace("mapleleaf_", "").replace("batch_tspider_", "");
         try {
           closeDBPool(user, propertyKey);
         } catch (SQLException e1) {
@@ -779,10 +741,7 @@ public class JDBCInterpreter extends Interpreter {
 
     cmd = cmd.trim();
     logger.debug("PropertyKey: {}, SQL command: '{}'", propertyKey, cmd);
-    if ("tspider".equals(contextInterpreter.getReplName()))
-      return executeSqlByQuery(propertyKey, cmd, contextInterpreter);
-    else
-      return executeSql(propertyKey, cmd, contextInterpreter);
+    return executeSql(propertyKey, cmd, contextInterpreter);
   }
 
   @Override
