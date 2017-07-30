@@ -60,11 +60,24 @@ public class QueryInterpreter extends Interpreter {
   public InterpreterResult interpret(String cmd, InterpreterContext interpreterContext) {
     LOGGER.info("Run influxDB command '{}'", cmd);
 
-    StringBuilder msg = new StringBuilder();
+    InterpreterResult interpreterResult = new InterpreterResult(Code.SUCCESS);
     property.getProperty("default.url");
     property.getProperty("default.user");
     property.getProperty("default.password");
-    InterpreterResult interpreterResult = new InterpreterResult(Code.SUCCESS);
+    try {
+      List<String>  relatedRT = BkdataUtils.parseSQLTablename(cmd);
+      BkdataUtils.callQueryApi(cmd,
+          "",
+          interpreterContext.getAuthenticationInfo().getUser(),
+          interpreterResult);
+      BkdataUtils.callbackNoteRT(relatedRT,
+          interpreterContext.getNoteId(),
+          interpreterContext.getParagraphId(),
+          interpreterContext.getAuthenticationInfo().getUser());
+    } catch (Exception e) {
+      logger.error("JDBC Interpreter bkdata predo - ", e);
+      return new InterpreterResult(Code.ERROR, e.getMessage());
+    }
     return interpreterResult;
   }
 
