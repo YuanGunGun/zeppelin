@@ -713,7 +713,7 @@ public class NotebookRestApi {
 
     Note note = notebook.getNote(noteId);
     checkIfNoteIsNotNull(note);
-    checkIfUserCanRead(noteId,bkAuth.getUserName(),
+    checkIfUserCanRead(noteId, bkAuth.getUserName(),
         "Insufficient privileges you cannot remove paragraph from this note");
 
     Paragraph p = note.getParagraph(paragraphId);
