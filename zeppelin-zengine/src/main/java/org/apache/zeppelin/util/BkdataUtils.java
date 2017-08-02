@@ -264,24 +264,30 @@ public class BkdataUtils {
    */
   public static DataApiRtn checkAccessPrivilege(String rt_id, String operator) {
     DataApiRtn rtn = new DataApiRtn();
-    String pathFormat = "/prod/authapi/unified_auth/result_table/%s?" +
-        "app_code=%s" +
-        "&app_secret=%s" +
-        "&operator=%s";
-    String path = String.format(pathFormat, rt_id, BKConf.APP_CODE, BKConf.APP_SECRET, operator);
+
+    String request = "{" +
+        "\"app_code\":" + "\"" + BKConf.APP_CODE + "\"," +
+        "\"app_secret\":" + "\"" + BKConf.APP_SECRET + "\"," +
+        "\"operator\":" + "\"" + operator + "\"" +
+        "}";
+
+
+    String pathFormat = "/prod/authapi/unified_auth/result_table/%s";
+    String path = String.format(pathFormat, rt_id);
     try {
       logger.info(path);
-      GetMethod get = HTTPUtils.httpGet("http://bk-data.apigw.o.oa.com", path);
-      Map<String, Object> resp = gson.fromJson(get.getResponseBodyAsString(),
+      PostMethod post = HTTPUtils.httpPost("http://bk-data.apigw.o.oa.com", path, request);
+      Map<String, Object> resp = gson.fromJson(post.getResponseBodyAsString(),
           new TypeToken<Map<String, Object>>() {
           }.getType());
+      post.releaseConnection();
       boolean result = (Boolean) resp.get("result");
       if (!result) {
         String msg = (String) resp.get("message");
         logger.info("{} {} {} auth failed : {}", operator, rt_id, msg);
         rtn.setMessage(msg);
-      }
-      rtn.setResult((Boolean) resp.get("data"));
+      } else
+        rtn.setResult((Boolean) resp.get("data"));
       return rtn;
     } catch (IOException ie) {
       rtn.setMessage(ie.getMessage());

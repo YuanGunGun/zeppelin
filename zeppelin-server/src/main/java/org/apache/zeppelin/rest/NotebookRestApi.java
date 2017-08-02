@@ -869,10 +869,12 @@ public class NotebookRestApi {
     Paragraph paragraph = note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(paragraph);
 
-    // handle params if presented
-    handleParagraphParams(message, note, paragraph);
+    RunParagraphWithParametersRequest request =
+        gson.fromJson(message, RunParagraphWithParametersRequest.class);
+    BkdataUtils.BKAuth bkAuth = BkdataUtils.convertBKTicket2Auth(request.getTicket());
+    handleParagraphParams(request, bkAuth, note, paragraph);
 
-    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
+    AuthenticationInfo subject = new AuthenticationInfo(bkAuth.getUserName());
 
     paragraph.setAuthenticationInfo(subject);
     note.persist(subject);
@@ -907,8 +909,10 @@ public class NotebookRestApi {
     Paragraph paragraph = note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(paragraph);
 
-    // handle params if presented
-    handleParagraphParams(message, note, paragraph);
+    RunParagraphWithParametersRequest request =
+        gson.fromJson(message, RunParagraphWithParametersRequest.class);
+    BkdataUtils.BKAuth bkAuth = BkdataUtils.convertBKTicket2Auth(request.getTicket());
+    handleParagraphParams(request, bkAuth, note, paragraph);
 
     if (paragraph.getListener() == null) {
       note.initializeJobListenerForParagraph(paragraph);
@@ -1107,18 +1111,16 @@ public class NotebookRestApi {
   }
 
 
-  private void handleParagraphParams(String message, Note note, Paragraph paragraph)
+  private void handleParagraphParams(RunParagraphWithParametersRequest request,
+                                     BkdataUtils.BKAuth bkAuth,
+                                     Note note,
+                                     Paragraph paragraph)
       throws IOException {
-    // handle params if presented
-    if (!StringUtils.isEmpty(message)) {
-      RunParagraphWithParametersRequest request =
-          gson.fromJson(message, RunParagraphWithParametersRequest.class);
-      Map<String, Object> paramsForUpdating = request.getParams();
-      if (paramsForUpdating != null) {
-        paragraph.settings.getParams().putAll(paramsForUpdating);
-        AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
-        note.persist(subject);
-      }
+    Map<String, Object> paramsForUpdating = request.getParams();
+    if (paramsForUpdating != null) {
+      paragraph.settings.getParams().putAll(paramsForUpdating);
+      AuthenticationInfo subject = new AuthenticationInfo(bkAuth.getUserName());
+      note.persist(subject);
     }
   }
 

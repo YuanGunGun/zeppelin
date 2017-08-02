@@ -30,6 +30,7 @@ public class HTTPUtils {
     LOG.info("Connecting to {}", url + path);
     HttpClient httpClient = new HttpClient();
     PostMethod postMethod = new PostMethod(url + path);
+    postMethod.setRequestHeader("content-type", "application/json");
     postMethod.setRequestBody(request);
     postMethod.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
     httpClient.executeMethod(postMethod);

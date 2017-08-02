@@ -24,6 +24,7 @@ import java.util.Map;
  */
 public class RunParagraphWithParametersRequest {
   Map<String, Object> params;
+  String bk_ticket;
 
   public RunParagraphWithParametersRequest() {
 
@@ -32,4 +33,6 @@ public class RunParagraphWithParametersRequest {
   public Map<String, Object> getParams() {
     return params;
   }
+
+  public String getTicket() { return bk_ticket; }
 }

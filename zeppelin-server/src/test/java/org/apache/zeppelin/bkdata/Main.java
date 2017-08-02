@@ -4,9 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.zeppelin.util.BKConf;
 import org.apache.zeppelin.util.BkdataUtils;
 import org.apache.zeppelin.util.HTTPUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -16,6 +21,8 @@ import java.util.regex.Pattern;
  * Created by norbertchen on 2017/6/26.
  */
 public class Main {
+  public static Logger logger = LoggerFactory.getLogger(Main.class);
+  private static Gson gson = new Gson();
   public static void main(String[] args) throws Exception{
 //    Gson gson = new Gson();
 //    String sql = "(select type as user_type,\n" +
@@ -60,18 +67,8 @@ public class Main {
 //    }
 //    String tmp = "\nshow tables; ";"
 //    System.out.println("1"+tmp.trim()+"1");
-    String line = "%spark.pyspark textFile = sc.textFile(\"/kafka/data/\")";
-    Pattern r = Pattern.compile("sc\\.textFile\\(.*$");
-    Pattern rn = Pattern.compile("\\(.*\\)");
-    Matcher m = r.matcher(line);
-    if (m.find()) {
-      System.out.println(m.group());
-      Matcher mn = rn.matcher(m.group());
-      if (mn.find()) {
-        System.out.println(mn.group());
-      }
-    }
 
+    System.out.println(BkdataUtils.fetchHdfsPrefix("988_battle_info"));
   }
 
   private static void test( List<String> abc){
