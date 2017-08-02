@@ -30,6 +30,7 @@ public class BKConf {
       add("offline_db");
       add("spark.pyspark");
       add("pyspark");
+      add("query");
     }
   };
   public static int maxParagraphSize = 20;
