@@ -43,6 +43,9 @@ import java.util.Map;
 @Produces("application/json")
 public class LoginRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(LoginRestApi.class);
+  private String jdbcRealmUrl = "http://xxx.xxx.xxx.com";
+  private String jdbcRealmPath = "/offline/analysis/authentication?bk_ticket=%s";
+  private Gson gson;
 
   /**
    * Required by Swagger.
